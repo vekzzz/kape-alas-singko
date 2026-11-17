@@ -1,0 +1,8 @@
+node_modules
+dist
+.taste-skill
+.vitest
+
+# AI prompt docs
+docs/
+*prompt*.md
