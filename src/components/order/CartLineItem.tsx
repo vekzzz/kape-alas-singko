@@ -8,7 +8,6 @@ import { QuantityStepper } from '../ui/QuantityStepper';
 type CartLineItemProps = {
   line: CartLine;
   onEdit: () => void;
-  /** Called instead of removing directly, so the panel can offer an undo. */
   onRemove: () => void;
 };
 

@@ -18,7 +18,6 @@ type MenuStageProps = {
   onOpenCart: () => void;
 };
 
-/** The whole page: one product at a time, with the menu rail to move between them. */
 export function MenuStage({ now, onCustomize, onOpenCart }: MenuStageProps) {
   const hour = Math.floor(now / 60);
   const items = useMemo(() => sortedMenu(hour * 60), [hour]);
@@ -49,7 +48,6 @@ export function MenuStage({ now, onCustomize, onOpenCart }: MenuStageProps) {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
 
-  // A horizontal trackpad swipe moves one product, then waits so one swipe is one step.
   const handleWheel = (event: WheelEvent) => {
     const horizontal = Math.abs(event.deltaX) >= MIN_WHEEL_DELTA && Math.abs(event.deltaX) >= Math.abs(event.deltaY);
     if (!horizontal || Date.now() < wheelLockedUntil.current) return;
@@ -57,7 +55,6 @@ export function MenuStage({ now, onCustomize, onOpenCart }: MenuStageProps) {
     step(event.deltaX > 0 ? 1 : -1);
   };
 
-  // The CSS uses --px and --py (-1 to 1) to shift the layers with the mouse.
   const handlePointerMove = (event: PointerEvent<HTMLElement>) => {
     const stage = stageRef.current;
     if (event.pointerType !== 'mouse' || !stage) return;
@@ -94,7 +91,6 @@ export function MenuStage({ now, onCustomize, onOpenCart }: MenuStageProps) {
   );
 }
 
-/** The product's colours become the page's colours, so the panels and the browser bar follow it. */
 function usePageColors(itemId: string) {
   const { background, ink } = stageColorsFor(itemId);
 

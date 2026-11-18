@@ -11,7 +11,6 @@ export type PickupSlot = {
   value: string;
 };
 
-/** Every quarter hour while the shop is open, starting at least ten minutes from now. */
 export function pickupSlots(nowMinutes: number): PickupSlot[] {
   const earliest = Math.ceil((nowMinutes + MIN_LEAD_TIME) / SLOT_LENGTH) * SLOT_LENGTH;
   let day: PickupSlot['day'] = 'today';
@@ -29,7 +28,6 @@ export function pickupSlots(nowMinutes: number): PickupSlot[] {
   return slots;
 }
 
-/** The moment a slot starts, as a timestamp, so the pickup time survives a reload or a new day. */
 export function pickupTimestamp(slot: Pick<PickupSlot, 'day' | 'minutes'>, now: Date): number {
   const dayOffset = slot.day === 'tomorrow' ? MINUTES_PER_DAY : 0;
   const minutesAway = slot.minutes + dayOffset - manilaMinutes(now);

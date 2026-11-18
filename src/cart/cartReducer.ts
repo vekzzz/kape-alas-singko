@@ -7,7 +7,6 @@ export type CartAction =
   | ({ type: 'update'; id: string } & LineDetails)
   | { type: 'setQuantity'; id: string; quantity: number }
   | { type: 'remove'; id: string }
-  /** Puts a removed line back where it was (undo). */
   | { type: 'restore'; line: CartLine; index: number }
   | { type: 'clear' };
 
@@ -23,7 +22,6 @@ export function cartReducer(lines: CartLine[], action: CartAction): CartLine[] {
   switch (action.type) {
     case 'add': {
       const { itemId, options, note, quantity } = action;
-      // The same drink with the same choices stacks onto one line.
       const match = lines.find((line) => line.itemId === itemId && line.note === note && sameOptions(line.options, options));
       if (match) {
         return lines.map((line) => (line === match ? { ...line, quantity: line.quantity + quantity } : line));

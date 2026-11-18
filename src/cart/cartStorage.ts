@@ -15,15 +15,9 @@ export function loadCart(): CartLine[] {
 export function saveCart(lines: CartLine[]) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(lines));
-  } catch {
-    // Storage can be blocked (private browsing). The cart still works for this visit.
-  }
+  } catch {}
 }
 
-/**
- * Keeps only lines that are well formed and still orderable: items taken off the menu
- * or sold out since the last visit are dropped, so they cannot slip into an order.
- */
 export function parseCartLines(saved: unknown): CartLine[] {
   if (!Array.isArray(saved)) return [];
   return saved.filter(isOrderableLine);

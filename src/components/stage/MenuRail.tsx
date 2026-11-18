@@ -11,14 +11,11 @@ type MenuRailProps = {
   onStep: (direction: 1 | -1) => void;
 };
 
-/** Short tab names; the full group name shows under the product title. */
 const TAB_NAMES: Record<MenuGroupId, string> = { espresso: 'Espresso', slow: 'Slow bar', cold: 'Cold', bakery: 'Bakery' };
 
-/** Category tabs and the scrolling strip of every product. */
 export function MenuRail({ items, activeIndex, onSelect, onStep }: MenuRailProps) {
   const stripRef = useRef<HTMLDivElement>(null);
   const activeGroup = items[activeIndex]?.group;
-  // Groups in menu order, each with the index of its first item.
   const groups = items.reduce<{ id: MenuGroupId; first: number }[]>((found, item, index) => {
     if (!found.some((group) => group.id === item.group)) found.push({ id: item.group, first: index });
     return found;

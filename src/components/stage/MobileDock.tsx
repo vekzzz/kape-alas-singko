@@ -8,10 +8,6 @@ type MobileDockProps = {
   onOpenCart: () => void;
 };
 
-/**
- * Phones only (hidden by CSS on wider screens): the add button and the order total stay
- * on screen however far the page is scrolled.
- */
 export function MobileDock({ item, onOpenCart }: MobileDockProps) {
   const { itemCount, total } = useCart();
   const { add, justAdded } = useQuickAdd(item);

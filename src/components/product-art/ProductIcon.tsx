@@ -3,7 +3,6 @@ import { FOAM_COLOR, scatter, seedFromId } from './artUtils';
 import { SvgMaterials } from './SvgMaterials';
 import { useSvgIds } from './useSvgIds';
 
-/** The product seen from above, small enough for lists and buttons. */
 export function ProductIcon({ item, size = 64 }: { item: MenuItem; size?: number }) {
   const ids = useSvgIds();
   const isPastry = item.group === 'bakery';

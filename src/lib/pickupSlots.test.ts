@@ -25,7 +25,6 @@ describe('pickupSlots', () => {
 });
 
 describe('pickupTimestamp', () => {
-  // 2026-11-18 20:50 in Manila.
   const now = new Date('2026-11-18T12:50:30Z');
 
   it('lands on the slot time today', () => {

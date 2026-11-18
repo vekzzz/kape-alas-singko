@@ -7,10 +7,6 @@ type ModalProps = {
   children: ReactNode;
 };
 
-/**
- * A side panel (a bottom sheet on phones) built on the native <dialog>,
- * which gives us the focus trap and Escape to close for free.
- */
 export function Modal({ open, onClose, label, children }: ModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
@@ -28,7 +24,6 @@ export function Modal({ open, onClose, label, children }: ModalProps) {
       aria-label={label}
       onClose={onClose}
       onClick={(event) => {
-        // A click on the dialog itself (not its content) is a click on the backdrop.
         if (event.target === dialogRef.current) onClose();
       }}
     >

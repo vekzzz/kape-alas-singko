@@ -2,7 +2,6 @@ import { animate } from 'motion/react';
 import { useEffect, useRef } from 'react';
 import { formatPeso } from '../../lib/pricing';
 
-/** Counts from the previous price to the new one. Screen readers get the final value from the parent's label. */
 export function AnimatedPrice({ value }: { value: number }) {
   const textRef = useRef<HTMLSpanElement>(null);
   const previousValue = useRef(value);

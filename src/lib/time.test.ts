@@ -42,7 +42,6 @@ describe('formatDuration', () => {
 });
 
 describe('formatPickup', () => {
-  // 2026-11-18 20:50 in Manila.
   const now = Date.parse('2026-11-18T12:50:00Z');
 
   it('says today or tomorrow by the Manila calendar', () => {

@@ -6,7 +6,6 @@ import { defaultOptions } from '../lib/pricing';
 
 const ADDED_MESSAGE_MS = 1400;
 
-/** Adds one of the item with its default choices, and says so for a moment. */
 export function useQuickAdd(item: MenuItem) {
   const { dispatch } = useCart();
   const [justAddedId, setJustAddedId] = useState<string | null>(null);

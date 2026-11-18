@@ -24,11 +24,9 @@ const STEAM_START_Y: Partial<Record<Vessel, number>> = {
 type ProductArtProps = {
   item: MenuItem;
   options: DrinkOptions;
-  /** Show rising steam on hot drinks. */
   steaming?: boolean;
 };
 
-/** The product as served, seen from the side. */
 export function ProductArt({ item, options, steaming = false }: ProductArtProps) {
   const ids = useSvgIds();
   const iced = options.temperature === 'iced' || Boolean(item.icedOnly);

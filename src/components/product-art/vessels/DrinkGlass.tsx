@@ -20,7 +20,6 @@ type DrinkGlassProps = {
   iced: boolean;
 };
 
-/** A clear tumbler. The coffee, milk and foam layers animate when the options change. */
 export function DrinkGlass({ ids, item, options, iced }: DrinkGlassProps) {
   const layers = measureLayers(item, options, iced);
   const { surfaceY, liquidHeight } = layers;
@@ -99,7 +98,6 @@ function measureLayers(item: MenuItem, options: DrinkOptions, iced: boolean) {
   const foamHeight = liquidHeight * foamShare;
   const surfaceY = GLASS_FLOOR - liquidHeight;
 
-  // Hot milk is stirred into the coffee; over ice it settles in layers. Tablea is always mixed.
   const plainMilk = MILK_COLORS[options.milk === 'none' ? 'whole' : options.milk];
   const isTablea = item.id === 'iced-tablea';
   const milkColor = isTablea ? mixColors(plainMilk, item.tone, 0.7) : iced ? plainMilk : mixColors(plainMilk, item.tone, 0.45);
@@ -111,7 +109,6 @@ function measureLayers(item: MenuItem, options: DrinkOptions, iced: boolean) {
   return { withMilk, liquidHeight, coffeeHeight, milkHeight, foamHeight, surfaceY, milkColor, topColor };
 }
 
-/** The glass tapers, so the liquid surface is wider near the rim. */
 function innerHalfWidth(y: number): number {
   return 46 + ((GLASS_FLOOR - y) / GLASS_DEPTH) * 14;
 }
@@ -154,7 +151,6 @@ function IceCubes({ visible, surfaceY, singleBlock }: { visible: boolean; surfac
   return (
     <motion.g className="ice" initial={false} animate={{ opacity: visible ? 1 : 0, y: visible ? 0 : -30 }} transition={LAYER_SPRING}>
       {cubes.map(({ x, y, size, angle }) => (
-        // The outer <g> is moved by the CSS float animation, the inner one holds the cube's own position.
         <g key={`${x}-${y}`}>
           <g transform={`translate(${x} ${surfaceY + 6 + y}) rotate(${angle})`}>
             <rect x={-size} y={-size * 0.8} width={size * 2} height={size * 1.6} rx={size * 0.3} fill="#fff" opacity="0.32" />

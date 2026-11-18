@@ -65,7 +65,6 @@ export function OrderPanel({ onClose, onEditLine }: OrderPanelProps) {
       total,
       sent: false,
     };
-    // Throws on a network or server error; PickupForm shows it and the cart stays as it is.
     const result = await sendOrder(order);
     const placed = { ...order, sent: result.sent, number: (result.sent && result.number) || order.number };
     saveLastOrder(placed);

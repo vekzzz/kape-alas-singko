@@ -1,5 +1,3 @@
-// All times are minutes since midnight in Manila (UTC+8, no daylight saving).
-
 export const MINUTES_PER_DAY = 24 * 60;
 export const OPENING_TIME = 5 * 60;
 export const CLOSING_TIME = 21 * 60;
@@ -29,12 +27,10 @@ export function formatTime(minutes: number): string {
   return `${hours12}:${mins} ${hours24 < 12 ? 'AM' : 'PM'}`;
 }
 
-/** Days since the epoch, counted in Manila, so two timestamps can be compared by calendar day. */
 export function manilaDay(timestamp: number): number {
   return Math.floor((timestamp + MANILA_UTC_OFFSET * 60_000) / (MINUTES_PER_DAY * 60_000));
 }
 
-/** "7:15 AM today", "5:00 AM tomorrow", or the date when it is further off. */
 export function formatPickup(pickupAt: number, now: number): string {
   const time = formatTime(manilaMinutes(new Date(pickupAt)));
   const daysAway = manilaDay(pickupAt) - manilaDay(now);

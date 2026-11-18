@@ -5,7 +5,6 @@ import { pickupSlots, type PickupSlot } from '../../lib/pickupSlots';
 import { formatPeso } from '../../lib/pricing';
 import { OPENING_TIME, formatTime, isOpen } from '../../lib/time';
 
-/** How many of the earliest times get their own button; the rest sit in a list behind "Later". */
 const QUICK_SLOTS = 4;
 
 export type PickupDetails = { name: string; phone: string; slot: PickupSlot };
@@ -13,7 +12,6 @@ export type PickupDetails = { name: string; phone: string; slot: PickupSlot };
 type PickupFormProps = {
   total: number;
   onBack: () => void;
-  /** Rejects when the order could not be sent; the form then shows an error and stays filled in. */
   onPlace: (details: PickupDetails) => Promise<void>;
 };
 
@@ -27,7 +25,6 @@ export function PickupForm({ total, onBack, onPlace }: PickupFormProps) {
   const [sending, setSending] = useState(false);
   const [phoneError, setPhoneError] = useState(false);
   const [sendError, setSendError] = useState(false);
-  // Fall back to the earliest slot if the chosen one has passed while the form was open.
   const chosenSlot = slots.find((slot) => slot.value === slotValue) ?? slots[0];
   const quickSlots = slots.slice(0, QUICK_SLOTS);
   const laterSlots = slots.slice(QUICK_SLOTS);

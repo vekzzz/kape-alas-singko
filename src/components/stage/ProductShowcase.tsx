@@ -12,7 +12,6 @@ type ProductShowcaseProps = {
   onSwipe: (direction: 1 | -1) => void;
 };
 
-/** The big product in the middle. Drag it sideways to move through the menu. */
 export function ProductShowcase({ item, direction, onSwipe }: ProductShowcaseProps) {
   return (
     <div className="par front">

@@ -13,7 +13,6 @@ export type MenuItem = {
   description: string;
   note?: string;
   price: number;
-  /** Main colour of the drink or pastry, used by the drawings. */
   tone: string;
   soldOut?: boolean;
   hasSizes?: boolean;
@@ -21,7 +20,6 @@ export type MenuItem = {
   hasMilk?: boolean;
   hasExtraShot?: boolean;
   icedOnly?: boolean;
-  /** Share of the drink that is coffee before any milk goes in, from 0 to 1. */
   coffeeRatio?: number;
 };
 
@@ -256,7 +254,6 @@ export function isCustomizable(item: MenuItem): boolean {
   return Boolean(item.hasSizes || item.hasTemperatures || item.hasMilk || item.hasExtraShot);
 }
 
-/** The cold bar moves to the top of the menu from 11 AM to 6 PM. */
 export function menuGroupOrder(manilaMinutes: number): MenuGroupId[] {
   const afternoon = manilaMinutes >= 11 * 60 && manilaMinutes < 18 * 60;
   return afternoon ? ['cold', 'espresso', 'slow', 'bakery'] : ['espresso', 'slow', 'cold', 'bakery'];

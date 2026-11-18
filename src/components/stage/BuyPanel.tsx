@@ -31,7 +31,6 @@ export function BuyPanel({ item, direction, onCustomize }: BuyPanelProps) {
 }
 
 function BuyDetails({ item, direction, onCustomize }: BuyPanelProps) {
-  // While it animates out, the old item's buttons must not take taps meant for the new one.
   const isPresent = useIsPresent();
   const { add, justAdded } = useQuickAdd(item);
   const defaults = isCustomizable(item) ? describeOptions(item, defaultOptions(item)) : '';

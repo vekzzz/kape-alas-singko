@@ -6,7 +6,6 @@ const SERVER_OUTLINE =
   'M74 116 L126 116 C150 132 160 160 156 190 C154 206 146 214 132 214 L68 214 C54 214 46 206 44 190 C40 160 50 132 74 116 Z';
 const DRIPPER_RIBS = [70, 86, 100, 114, 130];
 
-/** A glass server with a ceramic dripper on top, mid-brew. */
 export function PourOver({ ids, item }: { ids: SvgIds; item: MenuItem }) {
   return (
     <g>
