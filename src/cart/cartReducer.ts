@@ -7,6 +7,8 @@ export type CartAction =
   | ({ type: 'update'; id: string } & LineDetails)
   | { type: 'setQuantity'; id: string; quantity: number }
   | { type: 'remove'; id: string }
+  /** Puts a removed line back where it was (undo). */
+  | { type: 'restore'; line: CartLine; index: number }
   | { type: 'clear' };
 
 function sameOptions(a: DrinkOptions, b: DrinkOptions): boolean {
@@ -40,6 +42,12 @@ export function cartReducer(lines: CartLine[], action: CartAction): CartLine[] {
 
     case 'remove':
       return lines.filter((line) => line.id !== action.id);
+
+    case 'restore': {
+      if (lines.some((line) => line.id === action.line.id)) return lines;
+      const index = Math.min(Math.max(action.index, 0), lines.length);
+      return [...lines.slice(0, index), action.line, ...lines.slice(index)];
+    }
 
     case 'clear':
       return [];

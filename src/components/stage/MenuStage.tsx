@@ -3,6 +3,7 @@ import { sortedMenu, type MenuItem } from '../../data/menu';
 import { BuyPanel } from './BuyPanel';
 import { ItemTitle } from './ItemTitle';
 import { MenuRail } from './MenuRail';
+import { MobileDock } from './MobileDock';
 import { ProductShowcase } from './ProductShowcase';
 import { StageBackdrop } from './StageBackdrop';
 import { stageColorsFor } from './stageColors';
@@ -88,6 +89,7 @@ export function MenuStage({ now, onCustomize, onOpenCart }: MenuStageProps) {
 
       <BuyPanel item={item} direction={direction} onCustomize={onCustomize} />
       <MenuRail items={items} activeIndex={activeIndex} onSelect={(index) => goTo(index, index >= activeIndex ? 1 : -1)} onStep={step} />
+      <MobileDock item={item} onOpenCart={onOpenCart} />
     </main>
   );
 }

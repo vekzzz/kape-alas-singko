@@ -1,4 +1,4 @@
-import { CLOSING_TIME, OPENING_TIME, formatTime } from './time';
+import { CLOSING_TIME, MINUTES_PER_DAY, OPENING_TIME, formatTime, manilaMinutes } from './time';
 
 export const SLOT_LENGTH = 15;
 export const MIN_LEAD_TIME = 10;
@@ -27,4 +27,12 @@ export function pickupSlots(nowMinutes: number): PickupSlot[] {
     slots.push({ day, minutes, label: `${formatTime(minutes)} ${day}`, value: `${day}-${minutes}` });
   }
   return slots;
+}
+
+/** The moment a slot starts, as a timestamp, so the pickup time survives a reload or a new day. */
+export function pickupTimestamp(slot: Pick<PickupSlot, 'day' | 'minutes'>, now: Date): number {
+  const dayOffset = slot.day === 'tomorrow' ? MINUTES_PER_DAY : 0;
+  const minutesAway = slot.minutes + dayOffset - manilaMinutes(now);
+  const startOfMinute = now.getTime() - now.getUTCSeconds() * 1000 - now.getUTCMilliseconds();
+  return startOfMinute + minutesAway * 60_000;
 }

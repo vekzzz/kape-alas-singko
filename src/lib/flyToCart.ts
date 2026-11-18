@@ -2,7 +2,7 @@ const DOT_SIZE = 28;
 
 /** Sends a small dot from the pressed button to the cart button, then bumps the cart. */
 export function flyToCart(from: Element | null) {
-  const cartButton = document.querySelector('[data-cart-button]');
+  const cartButton = visibleCartButton();
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (!from || !cartButton || reducedMotion) return;
 
@@ -32,4 +32,14 @@ export function flyToCart(from: Element | null) {
     dot.remove();
     cartButton.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.18)' }, { transform: 'scale(1)' }], { duration: 320 });
   });
+}
+
+/** There are two cart buttons (header and, on phones, the dock); fly to whichever is on screen. */
+function visibleCartButton(): Element | null {
+  const buttons = [...document.querySelectorAll('[data-cart-button]')];
+  const onScreen = buttons.find((button) => {
+    const box = button.getBoundingClientRect();
+    return box.width > 0 && box.bottom > 0 && box.top < window.innerHeight;
+  });
+  return onScreen ?? null;
 }

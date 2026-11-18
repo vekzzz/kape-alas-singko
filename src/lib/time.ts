@@ -29,6 +29,21 @@ export function formatTime(minutes: number): string {
   return `${hours12}:${mins} ${hours24 < 12 ? 'AM' : 'PM'}`;
 }
 
+/** Days since the epoch, counted in Manila, so two timestamps can be compared by calendar day. */
+export function manilaDay(timestamp: number): number {
+  return Math.floor((timestamp + MANILA_UTC_OFFSET * 60_000) / (MINUTES_PER_DAY * 60_000));
+}
+
+/** "7:15 AM today", "5:00 AM tomorrow", or the date when it is further off. */
+export function formatPickup(pickupAt: number, now: number): string {
+  const time = formatTime(manilaMinutes(new Date(pickupAt)));
+  const daysAway = manilaDay(pickupAt) - manilaDay(now);
+  if (daysAway === 0) return `${time} today`;
+  if (daysAway === 1) return `${time} tomorrow`;
+  const date = new Date(pickupAt).toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', weekday: 'short', month: 'short', day: 'numeric' });
+  return `${time}, ${date}`;
+}
+
 export function formatDuration(minutes: number): string {
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;

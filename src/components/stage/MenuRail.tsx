@@ -1,6 +1,6 @@
 import { motion } from 'motion/react';
 import { useEffect, useRef } from 'react';
-import type { MenuItem } from '../../data/menu';
+import { getMenuGroup, type MenuGroupId, type MenuItem } from '../../data/menu';
 import { formatPeso } from '../../lib/pricing';
 import { ProductIcon } from '../product-art/ProductIcon';
 
@@ -11,9 +11,18 @@ type MenuRailProps = {
   onStep: (direction: 1 | -1) => void;
 };
 
-/** The scrolling strip of every product along the bottom of the page. */
+/** Short tab names; the full group name shows under the product title. */
+const TAB_NAMES: Record<MenuGroupId, string> = { espresso: 'Espresso', slow: 'Slow bar', cold: 'Cold', bakery: 'Bakery' };
+
+/** Category tabs and the scrolling strip of every product. */
 export function MenuRail({ items, activeIndex, onSelect, onStep }: MenuRailProps) {
   const stripRef = useRef<HTMLDivElement>(null);
+  const activeGroup = items[activeIndex]?.group;
+  // Groups in menu order, each with the index of its first item.
+  const groups = items.reduce<{ id: MenuGroupId; first: number }[]>((found, item, index) => {
+    if (!found.some((group) => group.id === item.group)) found.push({ id: item.group, first: index });
+    return found;
+  }, []);
 
   useEffect(() => {
     const strip = stripRef.current;
@@ -25,27 +34,45 @@ export function MenuRail({ items, activeIndex, onSelect, onStep }: MenuRailProps
 
   return (
     <nav className="stage-rail glass" aria-label="Menu">
-      <button type="button" className="round" onClick={() => onStep(-1)} aria-label="Previous drink">
-        ←
-      </button>
-
-      <div className="stage-strip" ref={stripRef} role="group" aria-label="All drinks and pastries">
-        {items.map((item, index) => {
-          const active = index === activeIndex;
-          return (
-            <button key={item.id} type="button" className={active ? 'chip on' : 'chip'} aria-pressed={active} onClick={() => onSelect(index)}>
-              {active && <motion.span layoutId="chip-pill" className="pill" transition={{ type: 'spring', stiffness: 300, damping: 30 }} />}
-              <ProductIcon item={item} size={36} />
-              <span>{item.name}</span>
-              <span className="chip-price num">{formatPeso(item.price)}</span>
-            </button>
-          );
-        })}
+      <div className="rail-tabs" role="group" aria-label="Jump to a section">
+        {groups.map((group) => (
+          <button
+            key={group.id}
+            type="button"
+            className={group.id === activeGroup ? 'rail-tab on' : 'rail-tab'}
+            aria-pressed={group.id === activeGroup}
+            aria-label={getMenuGroup(group.id).name}
+            onClick={() => onSelect(group.first)}
+          >
+            {TAB_NAMES[group.id]}
+          </button>
+        ))}
       </div>
 
-      <button type="button" className="round" onClick={() => onStep(1)} aria-label="Next drink">
-        →
-      </button>
+      <div className="rail-row">
+        <button type="button" className="round" onClick={() => onStep(-1)} aria-label="Previous item">
+          ←
+        </button>
+
+        <div className="stage-strip" ref={stripRef} role="group" aria-label="All drinks and pastries">
+          {items.map((item, index) => {
+            const active = index === activeIndex;
+            const className = ['chip', active && 'on', item.soldOut && 'sold'].filter(Boolean).join(' ');
+            return (
+              <button key={item.id} type="button" className={className} aria-pressed={active} onClick={() => onSelect(index)}>
+                {active && <motion.span layoutId="chip-pill" className="pill" transition={{ type: 'spring', stiffness: 300, damping: 30 }} />}
+                <ProductIcon item={item} size={36} />
+                <span>{item.name}</span>
+                <span className="chip-price num">{item.soldOut ? 'Sold out' : formatPeso(item.price)}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <button type="button" className="round" onClick={() => onStep(1)} aria-label="Next item">
+          →
+        </button>
+      </div>
     </nav>
   );
 }

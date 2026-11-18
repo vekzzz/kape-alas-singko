@@ -5,7 +5,14 @@ import { describeOptions, formatPeso, lineTotal, type CartLine } from '../../lib
 import { ProductIcon } from '../product-art/ProductIcon';
 import { QuantityStepper } from '../ui/QuantityStepper';
 
-export function CartLineItem({ line, onEdit }: { line: CartLine; onEdit: () => void }) {
+type CartLineItemProps = {
+  line: CartLine;
+  onEdit: () => void;
+  /** Called instead of removing directly, so the panel can offer an undo. */
+  onRemove: () => void;
+};
+
+export function CartLineItem({ line, onEdit, onRemove }: CartLineItemProps) {
   const { dispatch } = useCart();
   const item = getMenuItem(line.itemId);
   const details = [describeOptions(item, line.options), line.note].filter(Boolean).join(' · ');
@@ -24,7 +31,7 @@ export function CartLineItem({ line, onEdit }: { line: CartLine; onEdit: () => v
           <QuantityStepper
             value={line.quantity}
             min={0}
-            onChange={(quantity) => dispatch({ type: 'setQuantity', id: line.id, quantity })}
+            onChange={(quantity) => (quantity < 1 ? onRemove() : dispatch({ type: 'setQuantity', id: line.id, quantity }))}
             label={`Quantity of ${item.name}`}
           />
           <span className="line-actions">
@@ -33,7 +40,7 @@ export function CartLineItem({ line, onEdit }: { line: CartLine; onEdit: () => v
                 Change
               </button>
             )}
-            <button type="button" className="text-btn" onClick={() => dispatch({ type: 'remove', id: line.id })} aria-label={`Remove ${item.name}`}>
+            <button type="button" className="text-btn" onClick={onRemove} aria-label={`Remove ${item.name}`}>
               Remove
             </button>
           </span>
