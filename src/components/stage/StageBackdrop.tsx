@@ -43,7 +43,7 @@ export function StageBackdrop({ item }: { item: MenuItem }) {
               initial={{ x: 0, y: radius * 0.2, scale: 0 }}
               animate={{ x: Math.cos(radians) * radius * distance, y: Math.sin(radians) * radius * distance, scale: 1 }}
               exit={{ scale: 0, transition: { duration: 0.2 } }}
-              transition={{ type: 'spring', stiffness: 70, damping: 9, delay: 0.12 + i * 0.025 }}
+              transition={{ type: 'spring', stiffness: 90, damping: 18, delay: 0.12 + i * 0.025 }}
             >
               <span className="drop-float" style={{ background: color, animationDelay: `${i * -0.45}s` }} />
             </motion.span>
