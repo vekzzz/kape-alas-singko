@@ -1,6 +1,27 @@
 @import 'tailwindcss';
 
-/* The drink on stage sets --bg and --ink on <html>; everything else is mixed from those two. */
+@font-face {
+  font-family: 'General Sans';
+  src: url('/fonts/general-sans-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'General Sans';
+  src: url('/fonts/general-sans-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'General Sans';
+  src: url('/fonts/general-sans-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --bg: #113a4a;
   --ink: #c6ecff;
@@ -12,7 +33,6 @@
   --cup: var(--ink);
   --glass: color-mix(in srgb, var(--ink) 26%, var(--bg));
 
-  /* Frosted panels */
   --frost: color-mix(in srgb, var(--ink) 10%, transparent);
   --frost-strong: color-mix(in srgb, var(--bg) 62%, transparent);
   --frost-edge: color-mix(in srgb, var(--ink) 26%, transparent);
@@ -84,6 +104,17 @@ strong {
 .small {
   font-size: var(--step-small);
 }
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.nowrap {
+  white-space: nowrap;
+}
 .num {
   font-variant-numeric: tabular-nums;
 }
@@ -94,7 +125,6 @@ strong {
   gap: 16px;
 }
 
-/* Glass */
 .glass {
   background: var(--frost);
   -webkit-backdrop-filter: blur(22px) saturate(1.5);
@@ -105,7 +135,6 @@ strong {
   transition: background-color 0.7s var(--ease), border-color 0.7s;
 }
 
-/* Controls */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -152,12 +181,37 @@ strong {
   transform: none;
 }
 .text-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   font-weight: 500;
   text-decoration: underline;
   text-underline-offset: 4px;
   text-decoration-thickness: 2px;
   cursor: pointer;
   padding: 8px 0;
+}
+.btn:disabled,
+.text-btn:disabled {
+  opacity: 0.6;
+  cursor: progress;
+  transform: none;
+}
+.pickup a,
+.soft a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.form-error {
+  font-weight: 500;
+  padding: 12px 18px;
+  border-radius: 18px;
+  border: 1px solid var(--ink);
+  background: var(--frost-fill);
+}
+.field .form-error {
+  font-weight: 500;
 }
 .text-btn:hover {
   color: var(--muted);
@@ -172,7 +226,6 @@ strong {
   pointer-events: none;
 }
 
-/* Stage */
 .stage {
   position: relative;
   height: 100svh;
@@ -186,7 +239,6 @@ strong {
   overflow: hidden;
 }
 
-/* Three slow orbs in the product's colours, behind the frosted panels */
 .orbs {
   position: absolute;
   inset: 0;
@@ -476,6 +528,9 @@ strong {
   gap: 10px 22px;
   margin-top: 4px;
 }
+.defaults {
+  margin-top: -8px;
+}
 .pickup {
   padding: 16px 20px;
   border-radius: 18px;
@@ -485,11 +540,43 @@ strong {
 .stage-rail {
   grid-area: rail;
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  grid-template-columns: auto minmax(0, 1fr);
   gap: 12px;
   align-items: center;
   padding: 8px;
   border-radius: 999px;
+}
+.rail-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: var(--frost-fill);
+}
+.rail-tab {
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-size: var(--step-small);
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.3s, color 0.3s;
+}
+.rail-tab:hover {
+  background: var(--frost-fill);
+}
+.rail-tab.on {
+  background: var(--ink);
+  color: var(--bg);
+  font-weight: 700;
+}
+.rail-row {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  gap: 12px;
+  align-items: center;
+  min-width: 0;
 }
 .stage-strip {
   display: flex;
@@ -537,11 +624,28 @@ strong {
 .chip-price {
   font-weight: 500;
 }
+.chip.sold:not(.on) {
+  opacity: 0.55;
+}
 .chip.on .cupface {
   --dish: var(--bg);
 }
 
-/* Side panels: customize and order */
+.undo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 4px 8px 4px 20px;
+  border-radius: 999px;
+  background: var(--frost-fill);
+  font-weight: 500;
+}
+
+.dock {
+  display: none;
+}
+
 dialog.panel {
   position: fixed;
   inset: var(--m) var(--m) var(--m) auto;
@@ -754,16 +858,16 @@ dialog.panel::backdrop {
   margin-top: 10px;
 }
 
-/* Tablet and phone: one column, the strip docks to the bottom of the screen */
 @media (max-width: 899px) {
   .stage {
     height: auto;
     min-height: 100svh;
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto;
-    grid-template-areas: 'bar' 'cup' 'name' 'buy' 'rail';
+    grid-template-areas: 'bar' 'rail' 'cup' 'name' 'buy';
     gap: 18px;
     overflow: clip;
+    padding-bottom: calc(var(--m) + 84px + env(safe-area-inset-bottom));
   }
   .bar {
     display: grid;
@@ -790,7 +894,7 @@ dialog.panel::backdrop {
     font-size: var(--step-small);
   }
   .stage-cup {
-    height: min(42svh, 380px);
+    height: min(34svh, 320px);
   }
   .stage-ring {
     width: min(96vw, 46svh);
@@ -799,7 +903,7 @@ dialog.panel::backdrop {
     width: min(78vw, 38svh);
   }
   .stage-drink {
-    height: min(34svh, 340px);
+    height: min(28svh, 280px);
   }
   .drop.low {
     display: none;
@@ -812,10 +916,44 @@ dialog.panel::backdrop {
     padding-left: 6px;
   }
   .stage-rail {
-    position: sticky;
-    bottom: 12px;
     grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
     padding: 6px;
+    border-radius: var(--radius);
+  }
+  .rail-tabs {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .rail-tab {
+    flex: 1;
+  }
+  .rail-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .stage-buy .quick-add {
+    display: none;
+  }
+  .dock {
+    position: fixed;
+    z-index: 5;
+    left: 12px;
+    right: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    border-radius: 999px;
+    background: var(--frost-strong);
+  }
+  .dock-order {
+    padding: 0 18px 0 10px;
+    gap: 8px;
+  }
+  .dock-sold {
+    flex: 1;
+    text-align: center;
   }
   .stage-rail .round {
     display: none;
@@ -850,6 +988,17 @@ dialog.panel::backdrop {
   }
   .cart-btn {
     padding-left: 16px;
+  }
+  .customize-stage {
+    height: 150px;
+  }
+  .customize-stage .disc {
+    width: 140px;
+    height: 140px;
+    left: calc(50% - 70px);
+  }
+  .customize-stage .cup {
+    height: 132px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

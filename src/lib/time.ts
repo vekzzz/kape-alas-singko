@@ -1,5 +1,3 @@
-// All times are minutes since midnight in Manila (UTC+8, no daylight saving).
-
 export const MINUTES_PER_DAY = 24 * 60;
 export const OPENING_TIME = 5 * 60;
 export const CLOSING_TIME = 21 * 60;
@@ -27,6 +25,19 @@ export function formatTime(minutes: number): string {
   const hours12 = hours24 % 12 === 0 ? 12 : hours24 % 12;
   const mins = String(wrapped % 60).padStart(2, '0');
   return `${hours12}:${mins} ${hours24 < 12 ? 'AM' : 'PM'}`;
+}
+
+export function manilaDay(timestamp: number): number {
+  return Math.floor((timestamp + MANILA_UTC_OFFSET * 60_000) / (MINUTES_PER_DAY * 60_000));
+}
+
+export function formatPickup(pickupAt: number, now: number): string {
+  const time = formatTime(manilaMinutes(new Date(pickupAt)));
+  const daysAway = manilaDay(pickupAt) - manilaDay(now);
+  if (daysAway === 0) return `${time} today`;
+  if (daysAway === 1) return `${time} tomorrow`;
+  const date = new Date(pickupAt).toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', weekday: 'short', month: 'short', day: 'numeric' });
+  return `${time}, ${date}`;
 }
 
 export function formatDuration(minutes: number): string {

@@ -1,4 +1,4 @@
-import { CLOSING_TIME, OPENING_TIME, formatTime } from './time';
+import { CLOSING_TIME, MINUTES_PER_DAY, OPENING_TIME, formatTime, manilaMinutes } from './time';
 
 export const SLOT_LENGTH = 15;
 export const MIN_LEAD_TIME = 10;
@@ -11,7 +11,6 @@ export type PickupSlot = {
   value: string;
 };
 
-/** Every quarter hour while the shop is open, starting at least ten minutes from now. */
 export function pickupSlots(nowMinutes: number): PickupSlot[] {
   const earliest = Math.ceil((nowMinutes + MIN_LEAD_TIME) / SLOT_LENGTH) * SLOT_LENGTH;
   let day: PickupSlot['day'] = 'today';
@@ -27,4 +26,11 @@ export function pickupSlots(nowMinutes: number): PickupSlot[] {
     slots.push({ day, minutes, label: `${formatTime(minutes)} ${day}`, value: `${day}-${minutes}` });
   }
   return slots;
+}
+
+export function pickupTimestamp(slot: Pick<PickupSlot, 'day' | 'minutes'>, now: Date): number {
+  const dayOffset = slot.day === 'tomorrow' ? MINUTES_PER_DAY : 0;
+  const minutesAway = slot.minutes + dayOffset - manilaMinutes(now);
+  const startOfMinute = now.getTime() - now.getUTCSeconds() * 1000 - now.getUTCMilliseconds();
+  return startOfMinute + minutesAway * 60_000;
 }

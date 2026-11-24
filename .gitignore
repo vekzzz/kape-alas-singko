@@ -6,3 +6,6 @@ dist
 # AI prompt docs
 docs/
 *prompt*.md
+
+.env
+.env.local

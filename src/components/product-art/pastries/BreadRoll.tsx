@@ -12,7 +12,6 @@ type BreadRollProps = {
   seed: number;
 };
 
-/** A round roll dusted with breadcrumbs. `width` and `height` are radii. */
 export function BreadRoll({ x, y, width, height, crustColor, edgeColor, crumbColor = '#f0d6a4', seed }: BreadRollProps) {
   const gradientId = `roll${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
 

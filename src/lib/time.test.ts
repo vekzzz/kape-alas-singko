@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDuration, formatTime, isOpen, manilaMinutes, minutesUntilOpen } from './time';
+import { formatDuration, formatPickup, formatTime, isOpen, manilaMinutes, minutesUntilOpen } from './time';
 
 describe('manilaMinutes', () => {
   it('converts UTC to Manila time', () => {
@@ -38,5 +38,18 @@ describe('formatDuration', () => {
     expect(formatDuration(45)).toBe('45 min');
     expect(formatDuration(120)).toBe('2 h');
     expect(formatDuration(135)).toBe('2 h 15 min');
+  });
+});
+
+describe('formatPickup', () => {
+  const now = Date.parse('2026-11-18T12:50:00Z');
+
+  it('says today or tomorrow by the Manila calendar', () => {
+    expect(formatPickup(Date.parse('2026-11-18T13:00:00Z'), now)).toBe('9:00 PM today');
+    expect(formatPickup(Date.parse('2026-11-18T21:00:00Z'), now)).toBe('5:00 AM tomorrow');
+  });
+
+  it('turns a saved "tomorrow" into "today" once the day comes', () => {
+    expect(formatPickup(Date.parse('2026-11-18T21:00:00Z'), Date.parse('2026-11-18T20:00:00Z'))).toBe('5:00 AM today');
   });
 });

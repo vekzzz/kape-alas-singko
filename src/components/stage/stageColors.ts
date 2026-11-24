@@ -1,6 +1,5 @@
 type StageColors = { background: string; ink: string };
 
-/** Each product repaints the whole page in two flat colours taken from the product itself. */
 export const STAGE_COLORS: Record<string, StageColors> = {
   'alas-singko': { background: '#ff99d3', ink: '#3d0012' },
   americano: { background: '#1f0a0d', ink: '#ffb9df' },

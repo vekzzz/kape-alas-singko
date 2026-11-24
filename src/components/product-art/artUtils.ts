@@ -17,17 +17,12 @@ export function pickVessel(item: MenuItem, iced: boolean): Vessel {
   return 'cup';
 }
 
-/** Mixes two #rrggbb colours. `amount` is how much of `to` ends up in the result. */
 export function mixColors(from: string, to: string, amount: number): string {
   const channel = (hex: string, i: number) => parseInt(hex.slice(1 + i * 2, 3 + i * 2), 16);
   const mixed = [0, 1, 2].map((i) => Math.round(channel(from, i) * (1 - amount) + channel(to, i) * amount));
   return `#${mixed.map((value) => value.toString(16).padStart(2, '0')).join('')}`;
 }
 
-/**
- * Seeded random points in the 0–1 range, so crumbs, bubbles and droplets
- * land in the same place on every render.
- */
 export function scatter(count: number, seed: number): [number, number, number][] {
   let state = seed;
   const next = () => {

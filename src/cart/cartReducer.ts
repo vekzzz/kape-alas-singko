@@ -7,6 +7,7 @@ export type CartAction =
   | ({ type: 'update'; id: string } & LineDetails)
   | { type: 'setQuantity'; id: string; quantity: number }
   | { type: 'remove'; id: string }
+  | { type: 'restore'; line: CartLine; index: number }
   | { type: 'clear' };
 
 function sameOptions(a: DrinkOptions, b: DrinkOptions): boolean {
@@ -21,7 +22,6 @@ export function cartReducer(lines: CartLine[], action: CartAction): CartLine[] {
   switch (action.type) {
     case 'add': {
       const { itemId, options, note, quantity } = action;
-      // The same drink with the same choices stacks onto one line.
       const match = lines.find((line) => line.itemId === itemId && line.note === note && sameOptions(line.options, options));
       if (match) {
         return lines.map((line) => (line === match ? { ...line, quantity: line.quantity + quantity } : line));
@@ -40,6 +40,12 @@ export function cartReducer(lines: CartLine[], action: CartAction): CartLine[] {
 
     case 'remove':
       return lines.filter((line) => line.id !== action.id);
+
+    case 'restore': {
+      if (lines.some((line) => line.id === action.line.id)) return lines;
+      const index = Math.min(Math.max(action.index, 0), lines.length);
+      return [...lines.slice(0, index), action.line, ...lines.slice(index)];
+    }
 
     case 'clear':
       return [];

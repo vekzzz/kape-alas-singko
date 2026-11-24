@@ -98,7 +98,6 @@ function Ensaymada({ ids, seed }: PastryProps) {
 
 const SLICE_FACE = 'M46 198 L48 120 Q96 92 146 116 L148 198 Z';
 
-/** A thick slice standing on the plate with the cut face towards the viewer. */
 function BananaLoaf({ ids, seed }: PastryProps) {
   return (
     <>
