@@ -55,15 +55,26 @@ export function MenuStage({ now, onCustomize, onOpenCart }: MenuStageProps) {
     step(event.deltaX > 0 ? 1 : -1);
   };
 
+  const pendingPointer = useRef<{ x: number; y: number } | null>(null);
+  const pointerFrame = useRef(0);
+
   const handlePointerMove = (event: PointerEvent<HTMLElement>) => {
-    const stage = stageRef.current;
-    if (event.pointerType !== 'mouse' || !stage) return;
-    const bounds = stage.getBoundingClientRect();
-    stage.style.setProperty('--px', String(((event.clientX - bounds.left) / bounds.width) * 2 - 1));
-    stage.style.setProperty('--py', String(((event.clientY - bounds.top) / bounds.height) * 2 - 1));
+    if (event.pointerType !== 'mouse') return;
+    pendingPointer.current = { x: event.clientX, y: event.clientY };
+    if (pointerFrame.current) return;
+    pointerFrame.current = requestAnimationFrame(() => {
+      pointerFrame.current = 0;
+      const stage = stageRef.current;
+      const point = pendingPointer.current;
+      if (!stage || !point) return;
+      const bounds = stage.getBoundingClientRect();
+      stage.style.setProperty('--px', String(((point.x - bounds.left) / bounds.width) * 2 - 1));
+      stage.style.setProperty('--py', String(((point.y - bounds.top) / bounds.height) * 2 - 1));
+    });
   };
 
   const resetParallax = () => {
+    pendingPointer.current = null;
     stageRef.current?.style.setProperty('--px', '0');
     stageRef.current?.style.setProperty('--py', '0');
   };

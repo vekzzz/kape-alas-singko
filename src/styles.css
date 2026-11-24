@@ -64,7 +64,7 @@ body {
   line-height: 1.45;
   -webkit-font-smoothing: antialiased;
   overflow-x: clip;
-  transition: background-color 0.7s var(--ease), color 0.5s;
+  background: transparent;
 }
 ::selection {
   background: var(--ink);
@@ -127,12 +127,11 @@ strong {
 
 .glass {
   background: var(--frost);
-  -webkit-backdrop-filter: blur(22px) saturate(1.5);
-  backdrop-filter: blur(22px) saturate(1.5);
+  -webkit-backdrop-filter: blur(12px) saturate(1.4);
+  backdrop-filter: blur(12px) saturate(1.4);
   border: 1px solid var(--frost-edge);
   border-radius: var(--radius);
   box-shadow: inset 0 1px 0 color-mix(in srgb, #ffffff 22%, transparent);
-  transition: background-color 0.7s var(--ease), border-color 0.7s;
 }
 
 .btn {
@@ -240,6 +239,7 @@ strong {
 }
 
 .orbs {
+  contain: strict;
   position: absolute;
   inset: 0;
   overflow: hidden;
@@ -249,7 +249,6 @@ strong {
   position: absolute;
   border-radius: 50%;
   background: var(--dish);
-  transition: background-color 0.9s var(--ease);
 }
 .orbs i:nth-child(1) {
   width: 46vw;
@@ -382,6 +381,7 @@ strong {
 }
 
 .stage-cup {
+  contain: layout paint;
   grid-area: cup;
   position: relative;
   display: grid;
@@ -409,7 +409,6 @@ strong {
   aspect-ratio: 1;
   border-radius: 50%;
   background: color-mix(in srgb, var(--ink) 7%, var(--bg));
-  transition: background-color 0.7s var(--ease);
   animation: breathe 6s ease-in-out infinite;
 }
 .stage-disc {
@@ -418,7 +417,6 @@ strong {
   aspect-ratio: 1;
   border-radius: 50%;
   background: var(--dish);
-  transition: background-color 0.7s var(--ease);
 }
 .stage-drink {
   position: relative;
@@ -658,8 +656,8 @@ dialog.panel {
   border: 1px solid var(--frost-edge);
   border-radius: var(--radius);
   background: var(--frost-strong);
-  -webkit-backdrop-filter: blur(28px) saturate(1.6);
-  backdrop-filter: blur(28px) saturate(1.6);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  backdrop-filter: blur(14px) saturate(1.4);
   color: var(--ink);
   overflow-y: auto;
   transform: translateX(110%);
@@ -793,8 +791,8 @@ dialog.panel::backdrop {
   bottom: 0;
   padding-block: 12px;
   background: var(--frost-strong);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
 }
 .btn.grow {
   flex: 1;
@@ -1008,4 +1006,37 @@ dialog.panel::backdrop {
     animation: none !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+html:has(dialog[open]) .stage *,
+html:has(dialog[open]) .stage *::before,
+html:has(dialog[open]) .stage *::after {
+  animation-play-state: paused !important;
+}
+
+html.lite .glass,
+html.lite dialog.panel,
+html.lite .customize-foot {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  background: var(--frost-strong);
+}
+html.lite .orbs i,
+html.lite .stage-ring,
+html.lite .bob,
+html.lite .drop-float,
+html.lite .ice > g,
+html.lite .wave,
+html.lite .dot.on {
+  animation: none;
+}
+html.lite .steam {
+  display: none;
+}
+html.lite .drop:nth-child(even) {
+  display: none;
+}
+html.lite .par {
+  transition: none;
+  will-change: auto;
 }
