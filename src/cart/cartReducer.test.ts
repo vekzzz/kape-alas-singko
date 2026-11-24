@@ -22,4 +22,16 @@ describe('cartReducer', () => {
     const [line] = cartReducer([], addLatte);
     expect(cartReducer([line!], { type: 'setQuantity', id: line!.id, quantity: 0 })).toEqual([]);
   });
+
+  it('puts a removed line back in its old place', () => {
+    const iced = { ...addLatte, options: { ...latteOptions, temperature: 'iced' as const } };
+    const lines = cartReducer(cartReducer([], addLatte), iced);
+    const remaining = cartReducer(lines, { type: 'remove', id: lines[0]!.id });
+    expect(cartReducer(remaining, { type: 'restore', line: lines[0]!, index: 0 })).toEqual(lines);
+  });
+
+  it('does not restore a line twice', () => {
+    const lines = cartReducer([], addLatte);
+    expect(cartReducer(lines, { type: 'restore', line: lines[0]!, index: 0 })).toBe(lines);
+  });
 });

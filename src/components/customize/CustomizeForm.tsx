@@ -9,7 +9,6 @@ import { ChoiceGroup } from './ChoiceGroup';
 
 type CustomizeFormProps = {
   item: MenuItem;
-  /** Pass a cart line to edit it; leave it out to add a new one. */
   editing?: CartLine;
   onDone: () => void;
 };

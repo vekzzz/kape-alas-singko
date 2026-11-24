@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { pickupSlots } from './pickupSlots';
+import { pickupSlots, pickupTimestamp } from './pickupSlots';
 
 describe('pickupSlots', () => {
   it('starts at least ten minutes from now, on a quarter hour', () => {
@@ -21,5 +21,17 @@ describe('pickupSlots', () => {
     expect(pickupSlots(20 * 60 + 40)[0]).toMatchObject({ day: 'tomorrow', minutes: 300 });
     expect(pickupSlots(23 * 60)[0]).toMatchObject({ day: 'tomorrow', minutes: 300 });
     expect(pickupSlots(20 * 60 + 35)[0]).toMatchObject({ day: 'today', minutes: 20 * 60 + 45 });
+  });
+});
+
+describe('pickupTimestamp', () => {
+  const now = new Date('2026-11-18T12:50:30Z');
+
+  it('lands on the slot time today', () => {
+    expect(new Date(pickupTimestamp({ day: 'today', minutes: 21 * 60 }, now)).toISOString()).toBe('2026-11-18T13:00:00.000Z');
+  });
+
+  it('lands on the slot time tomorrow', () => {
+    expect(new Date(pickupTimestamp({ day: 'tomorrow', minutes: 5 * 60 }, now)).toISOString()).toBe('2026-11-18T21:00:00.000Z');
   });
 });

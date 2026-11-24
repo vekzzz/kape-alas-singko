@@ -4,7 +4,6 @@ import type { MenuItem } from '../../data/menu';
 
 type Droplet = { angle: number; distance: number; size: number };
 
-/** Where each splash droplet lands around the product. `distance` is a share of the backdrop radius. */
 const DROPLETS: Droplet[] = [
   { angle: -150, distance: 0.92, size: 30 },
   { angle: -118, distance: 1.08, size: 14 },
@@ -18,7 +17,6 @@ const DROPLETS: Droplet[] = [
   { angle: 206, distance: 0.98, size: 26 },
 ];
 
-/** The ring, the disc and the splash of droplets behind the product. */
 export function StageBackdrop({ item }: { item: MenuItem }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const radius = useHalfOfSmallerSide(containerRef);

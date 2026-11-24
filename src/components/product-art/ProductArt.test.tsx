@@ -4,8 +4,6 @@ import { MENU_ITEMS } from '../../data/menu';
 import { defaultOptions } from '../../lib/pricing';
 import { ProductArt } from './ProductArt';
 
-// SVG looks up clip paths and gradients by id. If two elements share an id,
-// the browser uses the first one and the drawing silently breaks.
 describe('ProductArt', () => {
   for (const item of MENU_ITEMS) {
     for (const temperature of ['hot', 'iced'] as const) {

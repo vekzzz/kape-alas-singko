@@ -12,7 +12,6 @@ type CoffeeSurfaceProps = {
   height: number;
 };
 
-/** The top of a hot drink seen at an angle: crema, latte art, cocoa or plain filter coffee. */
 export function CoffeeSurface({ ids, item, options, y, width, height }: CoffeeSurfaceProps) {
   const withMilk = Boolean(item.hasMilk) && options.milk !== 'none';
   const isEspresso = Boolean(item.hasExtraShot) && !withMilk;
@@ -33,7 +32,6 @@ export function CoffeeSurface({ ids, item, options, y, width, height }: CoffeeSu
   );
 }
 
-/** Drawn in a 100 × 28 box centred on 0,0, then scaled onto the cup. */
 function LatteArt({ itemId }: { itemId: string }) {
   if (itemId === 'flat-white') {
     return (

@@ -27,7 +27,6 @@ export function defaultOptions(item: MenuItem): DrinkOptions {
   };
 }
 
-/** Extras only cost money when the item actually offers that choice. */
 export function unitPrice(item: MenuItem, options: DrinkOptions): number {
   let price = item.price;
   if (item.hasSizes && options.size === 'large') price += EXTRA_COSTS.large;

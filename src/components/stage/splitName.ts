@@ -1,4 +1,3 @@
-/** Splits a product name into one or two lines of roughly equal length. */
 export function splitName(name: string): string[] {
   const words = name.split(' ');
   if (words.length === 1) return [name];

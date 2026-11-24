@@ -1,6 +1,5 @@
 import type { SvgIds } from './useSvgIds';
 
-/** Gradients and filters every drawing shares: ceramic, glass, chrome and soft shadows. */
 export function SvgMaterials({ ids, tone }: { ids: SvgIds; tone: string }) {
   const { id } = ids;
   return (

@@ -8,7 +8,6 @@ type ChoiceGroupProps<T extends string> = {
   onChange: (value: T) => void;
 };
 
-/** A row of radio buttons styled as pills. */
 export function ChoiceGroup<T extends string>({ legend, name, value, choices, onChange }: ChoiceGroupProps<T>) {
   return (
     <fieldset className="choice">

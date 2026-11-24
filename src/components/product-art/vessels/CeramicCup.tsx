@@ -8,14 +8,11 @@ type CeramicCupProps = {
   ids: SvgIds;
   item: MenuItem;
   options: DrinkOptions;
-  /** Vertical centre of the rim. */
   rimY: number;
-  /** Half the width of the rim. */
   radius: number;
   depth: number;
 };
 
-/** A white ceramic cup with a handle, standing on a saucer. */
 export function CeramicCup({ ids, item, options, rimY, radius, depth }: CeramicCupProps) {
   const rimHeight = radius * 0.25;
   const bottom = rimY + depth;
