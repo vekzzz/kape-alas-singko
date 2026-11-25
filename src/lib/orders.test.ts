@@ -3,6 +3,7 @@ import { newOrderNumber, normalizePhone, orderPayload, sendOrder, type PlacedOrd
 
 const order: PlacedOrder = {
   number: 'A5-K7P',
+  orderType: 'dine-in',
   name: 'Ana',
   phone: '09171234567',
   pickupAt: Date.parse('2026-11-18T23:15:00Z'),
@@ -41,6 +42,10 @@ describe('orderPayload', () => {
     expect(orderPayload(order).items[0]).toMatchObject({ item: 'Latte', quantity: 2, note: 'less ice' });
     expect(orderPayload(order).items[0]?.options).toContain('Large');
     expect(orderPayload(order).pickupAt).toBe('2026-11-18T23:15:00.000Z');
+  });
+
+  it('tells the bar whether the order is for here or to go', () => {
+    expect(orderPayload(order).orderType).toBe('dine-in');
   });
 });
 

@@ -1,14 +1,13 @@
 import { AnimatePresence } from 'motion/react';
 import { useEffect, useState } from 'react';
-import { loadLastOrder, saveLastOrder } from '../../cart/lastOrderStorage';
 import { useCart } from '../../cart/useCart';
 import { getMenuItem } from '../../data/menu';
-import { newOrderNumber, sendOrder, type PlacedOrder } from '../../lib/orders';
+import type { OrderStatuses } from '../../hooks/useOrderStatus';
+import { newOrderNumber, sendOrder, type OrderType, type PlacedOrder } from '../../lib/orders';
 import { pickupTimestamp } from '../../lib/pickupSlots';
 import { formatPeso, type CartLine } from '../../lib/pricing';
-import { formatPickup } from '../../lib/time';
 import { CartLineItem } from './CartLineItem';
-import { OrderConfirmation } from './OrderConfirmation';
+import { MyOrders } from './MyOrders';
 import { PickupForm, type PickupDetails } from './PickupForm';
 
 const UNDO_MS = 6000;
@@ -16,15 +15,19 @@ const UNDO_MS = 6000;
 type Removed = { line: CartLine; index: number };
 
 type OrderPanelProps = {
+  orderType: OrderType;
+  startOnOrders: boolean;
+  orders: PlacedOrder[];
+  statuses: OrderStatuses;
+  onPlaced: (order: PlacedOrder) => void;
   onClose: () => void;
   onEditLine: (line: CartLine) => void;
 };
 
-export function OrderPanel({ onClose, onEditLine }: OrderPanelProps) {
+export function OrderPanel({ orderType, startOnOrders, orders, statuses, onPlaced, onClose, onEditLine }: OrderPanelProps) {
   const { lines, total, dispatch } = useCart();
   const [step, setStep] = useState<'review' | 'pickup'>('review');
-  const [placedOrder, setPlacedOrder] = useState<PlacedOrder | null>(null);
-  const [lastOrder] = useState(() => loadLastOrder());
+  const [showingOrders, setShowingOrders] = useState(startOnOrders);
   const [removed, setRemoved] = useState<Removed | null>(null);
 
   useEffect(() => {
@@ -46,9 +49,18 @@ export function OrderPanel({ onClose, onEditLine }: OrderPanelProps) {
 
   const undoBar = removed && (
     <div className="undo" role="status">
-      <span>Removed {getMenuItem(removed.line.itemId).name}.</span>
+      <span>Took out the {getMenuItem(removed.line.itemId).name}.</span>
       <button type="button" className="text-btn" onClick={undoRemove}>
         Undo
+      </button>
+    </div>
+  );
+
+  const ordersLink = orders.length > 0 && (
+    <div className="pickup">
+      <p>{orders.length === 1 ? `You have order ${orders[0]!.number} on the way.` : `You have ${orders.length} orders on the way.`}</p>
+      <button type="button" className="text-btn" onClick={() => setShowingOrders(true)}>
+        Track {orders.length === 1 ? 'it' : 'them'}
       </button>
     </div>
   );
@@ -57,6 +69,7 @@ export function OrderPanel({ onClose, onEditLine }: OrderPanelProps) {
     const now = new Date();
     const order: PlacedOrder = {
       number: newOrderNumber(),
+      orderType,
       name,
       phone,
       pickupAt: pickupTimestamp(slot, now),
@@ -66,14 +79,13 @@ export function OrderPanel({ onClose, onEditLine }: OrderPanelProps) {
       sent: false,
     };
     const result = await sendOrder(order);
-    const placed = { ...order, sent: result.sent, number: (result.sent && result.number) || order.number };
-    saveLastOrder(placed);
-    setPlacedOrder(placed);
+    onPlaced({ ...order, sent: result.sent, number: (result.sent && result.number) || order.number });
+    setShowingOrders(true);
     dispatch({ type: 'clear' });
   };
 
-  if (placedOrder) {
-    return <OrderConfirmation order={placedOrder} onClose={onClose} />;
+  if (showingOrders && orders.length > 0) {
+    return <MyOrders orders={orders} statuses={statuses} onClose={onClose} />;
   }
 
   if (lines.length === 0) {
@@ -81,27 +93,17 @@ export function OrderPanel({ onClose, onEditLine }: OrderPanelProps) {
       <div className="cart">
         <h2 className="head">Your order</h2>
         {undoBar}
-        {lastOrder && !removed ? (
-          <div className="pickup">
-            <p>
-              Order <strong className="num nowrap">{lastOrder.number}</strong> for {formatPickup(lastOrder.pickupAt, Date.now())}.
-            </p>
-            <button type="button" className="text-btn" onClick={() => setPlacedOrder(lastOrder)}>
-              Show my order
-            </button>
-          </div>
-        ) : (
-          <p className="lead">Nothing here yet. Pick a coffee and it lands in this list.</p>
-        )}
+        <p className="lead">Nothing here yet. Find something you like and tap Add to my order.</p>
+        {!removed && ordersLink}
         <button type="button" className="btn" onClick={onClose}>
-          See the menu
+          Back to the menu
         </button>
       </div>
     );
   }
 
   if (step === 'pickup') {
-    return <PickupForm total={total} onBack={() => setStep('review')} onPlace={placeOrder} />;
+    return <PickupForm orderType={orderType} total={total} onBack={() => setStep('review')} onPlace={placeOrder} />;
   }
 
   return (
@@ -116,12 +118,13 @@ export function OrderPanel({ onClose, onEditLine }: OrderPanelProps) {
         </AnimatePresence>
       </ul>
       <div className="cart-sum">
-        <span>Subtotal</span>
+        <span>Your total</span>
         <span className="num">{formatPeso(total)}</span>
       </div>
       <button type="button" className="btn" onClick={() => setStep('pickup')}>
-        Continue to pickup
+        Next: your details
       </button>
+      {ordersLink}
     </div>
   );
 }

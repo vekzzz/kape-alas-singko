@@ -1,8 +1,13 @@
 import { getMenuItem } from '../data/menu';
 import { describeOptions, lineTotal, type CartLine } from './pricing';
 
+export type OrderType = 'dine-in' | 'take-out';
+
+export const ORDER_TYPE_LABELS: Record<OrderType, string> = { 'dine-in': 'Dine in', 'take-out': 'Take out' };
+
 export type PlacedOrder = {
   number: string;
+  orderType: OrderType;
   name: string;
   phone: string;
   pickupAt: number;
@@ -31,6 +36,7 @@ export function normalizePhone(input: string): string | null {
 export function orderPayload(order: PlacedOrder) {
   return {
     number: order.number,
+    orderType: order.orderType,
     name: order.name,
     phone: order.phone,
     pickupAt: new Date(order.pickupAt).toISOString(),

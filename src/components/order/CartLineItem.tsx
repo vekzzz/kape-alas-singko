@@ -15,7 +15,6 @@ export function CartLineItem({ line, onEdit, onRemove }: CartLineItemProps) {
   const { dispatch } = useCart();
   const item = getMenuItem(line.itemId);
   const details = [describeOptions(item, line.options), line.note].filter(Boolean).join(' · ');
-  const canEdit = item.group !== 'bakery';
 
   return (
     <motion.li layout initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: 40 }} transition={{ duration: 0.25 }}>
@@ -34,11 +33,9 @@ export function CartLineItem({ line, onEdit, onRemove }: CartLineItemProps) {
             label={`Quantity of ${item.name}`}
           />
           <span className="line-actions">
-            {canEdit && (
-              <button type="button" className="text-btn" onClick={onEdit} aria-label={`Change ${item.name}`}>
-                Change
-              </button>
-            )}
+            <button type="button" className="text-btn" onClick={onEdit} aria-label={`Change ${item.name}`}>
+              Change
+            </button>
             <button type="button" className="text-btn" onClick={onRemove} aria-label={`Remove ${item.name}`}>
               Remove
             </button>

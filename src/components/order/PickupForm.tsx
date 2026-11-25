@@ -1,6 +1,6 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { useManilaMinutes } from '../../hooks/useManilaMinutes';
-import { normalizePhone } from '../../lib/orders';
+import { normalizePhone, type OrderType } from '../../lib/orders';
 import { pickupSlots, type PickupSlot } from '../../lib/pickupSlots';
 import { formatPeso } from '../../lib/pricing';
 import { OPENING_TIME, formatTime, isOpen } from '../../lib/time';
@@ -10,12 +10,13 @@ const QUICK_SLOTS = 4;
 export type PickupDetails = { name: string; phone: string; slot: PickupSlot };
 
 type PickupFormProps = {
+  orderType: OrderType;
   total: number;
   onBack: () => void;
   onPlace: (details: PickupDetails) => Promise<void>;
 };
 
-export function PickupForm({ total, onBack, onPlace }: PickupFormProps) {
+export function PickupForm({ orderType, total, onBack, onPlace }: PickupFormProps) {
   const now = useManilaMinutes();
   const slots = useMemo(() => pickupSlots(now), [now]);
   const [name, setName] = useState('');
@@ -52,19 +53,22 @@ export function PickupForm({ total, onBack, onPlace }: PickupFormProps) {
 
   return (
     <form className="cart" onSubmit={handleSubmit} aria-busy={sending}>
-      <h2 className="head">Pickup details</h2>
+      <h2 className="head">Almost there!</h2>
+      <p className="soft">
+        {orderType === 'dine-in' ? "You're dining in. We'll call your name when it's on the counter." : "It's to go. We'll pack it up and call your name at the counter."}
+      </p>
       {!isOpen(now) && (
-        <p className="soft">We are closed right now, so the first times offered are for our next opening at {formatTime(OPENING_TIME)}.</p>
+        <p className="soft">We're closed right now, so the earliest times are for when we open at {formatTime(OPENING_TIME)}.</p>
       )}
 
       <label className="field">
-        <span>Name to call out</span>
+        <span>What name should we call out?</span>
         <input type="text" value={name} onChange={(event) => setName(event.target.value)} required maxLength={30} autoComplete="given-name" />
       </label>
 
       <label className="field">
         <span>
-          Mobile number <span className="soft">(optional, in case we need to reach you)</span>
+          Your mobile number <span className="soft">(optional, only if we need to reach you)</span>
         </span>
         <input
           type="tel"
@@ -82,13 +86,15 @@ export function PickupForm({ total, onBack, onPlace }: PickupFormProps) {
         />
         {phoneError && (
           <span id="phone-error" className="form-error" role="alert">
-            Use a PH mobile number like 0917 123 4567, or leave it blank.
+            That number doesn't look right. Try one like 0917 123 4567, or leave it blank.
           </span>
         )}
       </label>
 
       <fieldset className="choice">
-        <legend>Pickup time, {chosenSlot.day}</legend>
+        <legend>
+          When should it be ready? ({chosenSlot.day})
+        </legend>
         <div className="choice-row">
           {quickSlots.map((slot, index) => (
             <label key={slot.value} className="pill-option">
@@ -137,21 +143,21 @@ export function PickupForm({ total, onBack, onPlace }: PickupFormProps) {
       </fieldset>
 
       <div className="cart-sum">
-        <span>Total, paid at the counter</span>
+        <span>You'll pay at the counter</span>
         <span className="num">{formatPeso(total)}</span>
       </div>
 
       {sendError && (
         <p className="form-error" role="alert">
-          We couldn't reach the bar just now. Check your connection and try again; your order is still here.
+          Hmm, we couldn't reach the bar. Check your connection and try again. Don't worry, your order is still here.
         </p>
       )}
 
       <button type="submit" className="btn" disabled={sending}>
-        {sending ? 'Sending to the bar…' : sendError ? 'Try again' : 'Place order'}
+        {sending ? 'Sending it to the bar…' : sendError ? 'Try again' : 'Send my order'}
       </button>
       <button type="button" className="text-btn" onClick={onBack} disabled={sending}>
-        Back to the order
+        Back to my order
       </button>
     </form>
   );

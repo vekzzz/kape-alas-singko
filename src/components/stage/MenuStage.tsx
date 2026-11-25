@@ -1,5 +1,6 @@
 import { useEffect, useEffectEvent, useMemo, useRef, useState, type PointerEvent, type WheelEvent } from 'react';
 import { sortedMenu, type MenuItem } from '../../data/menu';
+import type { OrderType } from '../../lib/orders';
 import { BuyPanel } from './BuyPanel';
 import { ItemTitle } from './ItemTitle';
 import { MenuRail } from './MenuRail';
@@ -14,11 +15,13 @@ const MIN_WHEEL_DELTA = 30;
 
 type MenuStageProps = {
   now: number;
+  orderType: OrderType;
+  onChangeOrderType: () => void;
   onCustomize: (item: MenuItem) => void;
   onOpenCart: () => void;
 };
 
-export function MenuStage({ now, onCustomize, onOpenCart }: MenuStageProps) {
+export function MenuStage({ now, orderType, onChangeOrderType, onCustomize, onOpenCart }: MenuStageProps) {
   const hour = Math.floor(now / 60);
   const items = useMemo(() => sortedMenu(hour * 60), [hour]);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -87,7 +90,7 @@ export function MenuStage({ now, onCustomize, onOpenCart }: MenuStageProps) {
         <i style={{ background: item.tone }} />
       </div>
 
-      <StageHeader now={now} onOpenCart={onOpenCart} />
+      <StageHeader now={now} orderType={orderType} onChangeOrderType={onChangeOrderType} onOpenCart={onOpenCart} />
       <ItemTitle item={item} />
 
       <div className="stage-cup">
