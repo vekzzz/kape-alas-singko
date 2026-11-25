@@ -20,11 +20,11 @@ export function BuyPanel({ item, direction, onCustomize }: BuyPanelProps) {
         <BuyDetails key={item.id} item={item} direction={direction} onCustomize={onCustomize} />
       </AnimatePresence>
       <p className="pickup">
-        Pick up at{' '}
+        Pick it up at{' '}
         <a href={MAPS_URL} target="_blank" rel="noopener noreferrer">
           {SHOP_ADDRESS}
         </a>
-        . {SHOP_HOURS}. Pay at the counter.
+        . We're open {SHOP_HOURS.charAt(0).toLowerCase() + SHOP_HOURS.slice(1)}, and you pay at the counter.
       </p>
     </div>
   );
@@ -53,20 +53,20 @@ function BuyDetails({ item, direction, onCustomize }: BuyPanelProps) {
       {item.note && <p className="strong">{item.note}</p>}
 
       {item.soldOut ? (
-        <p className="strong">Sold out today. Back tomorrow from {formatTime(OPENING_TIME)}.</p>
+        <p className="strong">Sorry, we've sold out of this today. It's back tomorrow from {formatTime(OPENING_TIME)}.</p>
       ) : (
         <>
           <div className="stage-actions">
             <button type="button" className="btn quick-add" onClick={(event) => add(event.currentTarget)}>
-              {justAdded ? 'Added, one more?' : 'Add to order'}
+              {justAdded ? 'Added! Want another?' : 'Add to my order'}
             </button>
             {isCustomizable(item) && (
               <button type="button" className="text-btn" onClick={() => onCustomize(item)}>
-                Size, milk, shots
+                Make it your way
               </button>
             )}
           </div>
-          {defaults && <p className="soft small defaults">Comes {defaults.toLowerCase()}.</p>}
+          {defaults && <p className="soft small defaults">We make it {defaults.toLowerCase()} unless you say otherwise.</p>}
         </>
       )}
     </motion.div>

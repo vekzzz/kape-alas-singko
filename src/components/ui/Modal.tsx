@@ -28,8 +28,10 @@ export function Modal({ open, onClose, label, children }: ModalProps) {
       }}
     >
       <div className="panel-in">
-        <button type="button" className="text-btn close" onClick={onClose}>
-          Close
+        <button type="button" className="close" onClick={onClose} aria-label="Close">
+          <svg viewBox="0 0 18 18" aria-hidden="true">
+            <path d="M3 3l12 12M15 3L3 15" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" />
+          </svg>
         </button>
         {open && children}
       </div>
