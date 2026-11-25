@@ -15,15 +15,15 @@ export function MobileDock({ item, onOpenCart }: MobileDockProps) {
   return (
     <div className="dock glass">
       {item.soldOut ? (
-        <p className="dock-sold strong">Sold out today</p>
+        <p className="dock-sold strong">Sold out today, sorry!</p>
       ) : (
         <button type="button" className="btn grow" onClick={(event) => add(event.currentTarget)}>
-          {justAdded ? 'Added, one more?' : `Add · ${formatPeso(item.price)}`}
+          {justAdded ? 'Added! Another?' : `Add · ${formatPeso(item.price)}`}
         </button>
       )}
       {itemCount > 0 && (
         <button type="button" className="btn dock-order" onClick={onOpenCart} data-cart-button>
-          Order <span className="count num">{itemCount}</span>
+          My order <span className="count num">{itemCount}</span>
           <span className="num">{formatPeso(total)}</span>
         </button>
       )}

@@ -46,7 +46,7 @@ export function CustomizeForm({ item, editing, onDone }: CustomizeFormProps) {
 
       {item.hasSizes && (
         <ChoiceGroup
-          legend="Size"
+          legend="What size?"
           name="size"
           value={options.size}
           onChange={(size) => updateOptions({ size })}
@@ -59,7 +59,7 @@ export function CustomizeForm({ item, editing, onDone }: CustomizeFormProps) {
 
       {item.hasTemperatures && (
         <ChoiceGroup
-          legend="Served"
+          legend="Hot or iced?"
           name="temperature"
           value={options.temperature}
           onChange={(temperature) => updateOptions({ temperature })}
@@ -72,7 +72,7 @@ export function CustomizeForm({ item, editing, onDone }: CustomizeFormProps) {
 
       {item.hasMilk && (
         <ChoiceGroup
-          legend="Milk"
+          legend="Which milk?"
           name="milk"
           value={options.milk}
           onChange={(milk) => updateOptions({ milk })}
@@ -86,7 +86,7 @@ export function CustomizeForm({ item, editing, onDone }: CustomizeFormProps) {
 
       {item.hasExtraShot && (
         <fieldset className="choice">
-          <legend>Strength</legend>
+          <legend>Want it stronger?</legend>
           <label className="pill-option">
             <input type="checkbox" checked={options.extraShot} onChange={(event) => updateOptions({ extraShot: event.target.checked })} />
             <span>Extra shot +{formatPeso(EXTRA_COSTS.extraShot)}</span>
@@ -97,14 +97,14 @@ export function CustomizeForm({ item, editing, onDone }: CustomizeFormProps) {
       {!isCustomizable(item) && item.note && <p className="soft">{item.note}</p>}
 
       <label className="field">
-        <span>Note for the bar</span>
-        <input type="text" value={note} onChange={(event) => setNote(event.target.value)} maxLength={60} placeholder="Less ice, extra hot…" />
+        <span>Anything else we should know?</span>
+        <input type="text" value={note} onChange={(event) => setNote(event.target.value)} maxLength={60} placeholder={item.group === 'bakery' ? 'Warmed up, cut in half…' : 'Less ice, extra hot…'} />
       </label>
 
       <div className="customize-foot">
         <QuantityStepper value={quantity} onChange={setQuantity} label="Quantity" />
         <button type="submit" className="btn grow">
-          {editing ? 'Save changes' : 'Add to order'} · {formatPeso(total)}
+          {editing ? 'Save my changes' : 'Add to my order'} · {formatPeso(total)}
         </button>
       </div>
     </form>
