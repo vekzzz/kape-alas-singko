@@ -46,6 +46,7 @@
 
   --m: clamp(12px, 1.8vw, 24px);
   --ease: cubic-bezier(0.2, 0.7, 0.1, 1);
+  --error: color-mix(in srgb, #d0342c 62%, var(--ink));
 }
 
 html {
@@ -817,6 +818,37 @@ dialog.panel::backdrop {
 .field input::placeholder {
   color: var(--muted);
 }
+.field input[aria-invalid='true'] {
+  border: 2px solid var(--error);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--error) 18%, transparent);
+}
+.field-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding-inline: 18px;
+  color: var(--error);
+  font-size: var(--step-small);
+  font-weight: 600;
+  line-height: 1.35;
+  animation: field-error-in 0.28s var(--ease);
+}
+.field-error svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  margin-top: 1px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+@keyframes field-error-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
 .customize-foot {
   display: flex;
   gap: 16px;
@@ -1295,10 +1327,10 @@ html.lite .tracker.ready {
 }
 .welcome-title {
   margin: 0;
-  max-width: 14ch;
-  font-size: clamp(2.25rem, min(1rem + 5vw, 8.5vh), 6rem);
+  max-width: 20ch;
+  font-size: clamp(1.75rem, min(0.75rem + 4vw, 6.5vh), 4.5rem);
   font-weight: 700;
-  line-height: 0.92;
+  line-height: 1;
   letter-spacing: -0.03em;
 }
 .welcome-choices {
@@ -1373,10 +1405,6 @@ html.lite .tracker.ready {
   font-size: var(--step-lead);
   font-weight: 700;
   letter-spacing: -0.01em;
-}
-.welcome-detail {
-  color: var(--muted);
-  font-weight: 500;
 }
 .welcome-foot {
   justify-self: center;

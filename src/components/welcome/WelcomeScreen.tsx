@@ -10,11 +10,11 @@ import { stageColorsFor } from '../stage/stageColors';
 
 const LATTE = getMenuItem('latte');
 
-type Choice = { type: OrderType; detail: string; options: DrinkOptions };
+type Choice = { type: OrderType; options: DrinkOptions };
 
 const CHOICES: Choice[] = [
-  { type: 'dine-in', detail: 'Stay a while at the bar', options: { ...defaultOptions(LATTE), temperature: 'hot' } },
-  { type: 'take-out', detail: 'Grab it and go', options: { ...defaultOptions(LATTE), temperature: 'iced' } },
+  { type: 'dine-in', options: { ...defaultOptions(LATTE), temperature: 'hot' } },
+  { type: 'take-out', options: { ...defaultOptions(LATTE), temperature: 'iced' } },
 ];
 
 type WelcomeScreenProps = {
@@ -44,9 +44,9 @@ export function WelcomeScreen({ now, onChoose }: WelcomeScreenProps) {
       </header>
 
       <section className="welcome-in" aria-labelledby="welcome-question">
-        <p className="eyebrow">Welcome! Order here, pay at the counter</p>
+        <p className="eyebrow">Welcome to our cafe!</p>
         <h2 id="welcome-question" className="welcome-title">
-          How are you having it today?
+          How would you like to enjoy your cafe favourites today?
         </h2>
 
         <div className="welcome-choices">
@@ -66,7 +66,6 @@ export function WelcomeScreen({ now, onChoose }: WelcomeScreenProps) {
                 </span>
               </span>
               <span className="welcome-label">{ORDER_TYPE_LABELS[choice.type]}</span>
-              <span className="welcome-detail">{choice.detail}</span>
             </motion.button>
           ))}
         </div>

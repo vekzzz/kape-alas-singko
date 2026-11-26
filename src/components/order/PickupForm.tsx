@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from 'react';
+import { useMemo, useRef, useState, type FormEvent } from 'react';
 import { useManilaMinutes } from '../../hooks/useManilaMinutes';
 import { normalizePhone, type OrderType } from '../../lib/orders';
 import { pickupSlots, type PickupSlot } from '../../lib/pickupSlots';
@@ -24,7 +24,10 @@ export function PickupForm({ orderType, total, onBack, onPlace }: PickupFormProp
   const [slotValue, setSlotValue] = useState('');
   const [showLater, setShowLater] = useState(false);
   const [sending, setSending] = useState(false);
+  const [nameError, setNameError] = useState(false);
   const [phoneError, setPhoneError] = useState(false);
+  const nameRef = useRef<HTMLInputElement>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
   const [sendError, setSendError] = useState(false);
   const chosenSlot = slots.find((slot) => slot.value === slotValue) ?? slots[0];
   const quickSlots = slots.slice(0, QUICK_SLOTS);
@@ -35,9 +38,16 @@ export function PickupForm({ orderType, total, onBack, onPlace }: PickupFormProp
     event.preventDefault();
     if (sending) return;
 
+    const missingName = !name.trim();
     const normalizedPhone = phone.trim() ? normalizePhone(phone) : '';
+    setNameError(missingName);
+    setPhoneError(normalizedPhone === null);
+    if (missingName) {
+      nudge(nameRef.current);
+      return;
+    }
     if (normalizedPhone === null) {
-      setPhoneError(true);
+      nudge(phoneRef.current);
       return;
     }
 
@@ -52,7 +62,7 @@ export function PickupForm({ orderType, total, onBack, onPlace }: PickupFormProp
   };
 
   return (
-    <form className="cart" onSubmit={handleSubmit} aria-busy={sending}>
+    <form className="cart" onSubmit={handleSubmit} aria-busy={sending} noValidate>
       <h2 className="head">Almost there!</h2>
       <p className="soft">
         {orderType === 'dine-in' ? "You're dining in. We'll call your name when it's on the counter." : "It's to go. We'll pack it up and call your name at the counter."}
@@ -63,7 +73,22 @@ export function PickupForm({ orderType, total, onBack, onPlace }: PickupFormProp
 
       <label className="field">
         <span>What name should we call out?</span>
-        <input type="text" value={name} onChange={(event) => setName(event.target.value)} required maxLength={30} autoComplete="given-name" />
+        <input
+          ref={nameRef}
+          type="text"
+          value={name}
+          onChange={(event) => {
+            setName(event.target.value);
+            setNameError(false);
+          }}
+          required
+          maxLength={30}
+          autoComplete="given-name"
+          placeholder="e.g. Maria"
+          aria-invalid={nameError}
+          aria-describedby={nameError ? 'name-error' : undefined}
+        />
+        {nameError && <FieldError id="name-error">Just your first name is fine, so we know who to call.</FieldError>}
       </label>
 
       <label className="field">
@@ -71,6 +96,7 @@ export function PickupForm({ orderType, total, onBack, onPlace }: PickupFormProp
           Your mobile number <span className="soft">(optional, only if we need to reach you)</span>
         </span>
         <input
+          ref={phoneRef}
           type="tel"
           inputMode="tel"
           value={phone}
@@ -78,6 +104,7 @@ export function PickupForm({ orderType, total, onBack, onPlace }: PickupFormProp
             setPhone(event.target.value);
             setPhoneError(false);
           }}
+          onBlur={() => setPhoneError(phone.trim() !== '' && normalizePhone(phone) === null)}
           maxLength={16}
           autoComplete="tel"
           placeholder="0917 123 4567"
@@ -85,9 +112,7 @@ export function PickupForm({ orderType, total, onBack, onPlace }: PickupFormProp
           aria-describedby={phoneError ? 'phone-error' : undefined}
         />
         {phoneError && (
-          <span id="phone-error" className="form-error" role="alert">
-            That number doesn't look right. Try one like 0917 123 4567, or leave it blank.
-          </span>
+          <FieldError id="phone-error">Hmm, that number doesn't look quite right. Try one like 0917 123 4567, or leave it blank.</FieldError>
         )}
       </label>
 
@@ -143,7 +168,7 @@ export function PickupForm({ orderType, total, onBack, onPlace }: PickupFormProp
       </fieldset>
 
       <div className="cart-sum">
-        <span>You'll pay at the counter</span>
+        <span>Payment at the counter</span>
         <span className="num">{formatPeso(total)}</span>
       </div>
 
@@ -154,11 +179,35 @@ export function PickupForm({ orderType, total, onBack, onPlace }: PickupFormProp
       )}
 
       <button type="submit" className="btn" disabled={sending}>
-        {sending ? 'Sending it to the bar…' : sendError ? 'Try again' : 'Send my order'}
+        {sending ? 'Sending it to the bar…' : sendError ? 'Try again' : 'Prepare my order'}
       </button>
       <button type="button" className="text-btn" onClick={onBack} disabled={sending}>
         Back to my order
       </button>
     </form>
+  );
+}
+
+function FieldError({ id, children }: { id: string; children: string }) {
+  return (
+    <span id={id} className="field-error" role="alert">
+      <svg viewBox="0 0 20 20" aria-hidden="true">
+        <circle cx="10" cy="10" r="9" />
+        <path d="M10 5.5v5.5M10 14.2v.3" />
+      </svg>
+      {children}
+    </span>
+  );
+}
+
+function nudge(input: HTMLInputElement | null) {
+  if (!input) return;
+  input.focus({ preventScroll: true });
+  input.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  const calm = document.documentElement.classList.contains('lite') || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (calm) return;
+  input.animate(
+    [{ transform: 'translateX(0)' }, { transform: 'translateX(-6px)' }, { transform: 'translateX(5px)' }, { transform: 'translateX(-3px)' }, { transform: 'translateX(0)' }],
+    { duration: 360, easing: 'ease-out' },
   );
 }

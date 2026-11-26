@@ -122,7 +122,7 @@ export function OrderPanel({ orderType, startOnOrders, orders, statuses, onPlace
         <span className="num">{formatPeso(total)}</span>
       </div>
       <button type="button" className="btn" onClick={() => setStep('pickup')}>
-        Next: your details
+        Proceed
       </button>
       {ordersLink}
     </div>
