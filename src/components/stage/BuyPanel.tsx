@@ -2,7 +2,6 @@ import { AnimatePresence, motion, useIsPresent } from 'motion/react';
 import { isCustomizable, type MenuItem } from '../../data/menu';
 import { useQuickAdd } from '../../hooks/useQuickAdd';
 import { defaultOptions, describeOptions, formatPeso } from '../../lib/pricing';
-import { MAPS_URL, SHOP_ADDRESS, SHOP_HOURS } from '../../lib/shop';
 import { OPENING_TIME, formatTime } from '../../lib/time';
 import { AnimatedPrice } from './AnimatedPrice';
 import { EASE_OUT, panelVariants } from './motionPresets';
@@ -20,11 +19,7 @@ export function BuyPanel({ item, direction, onCustomize }: BuyPanelProps) {
         <BuyDetails key={item.id} item={item} direction={direction} onCustomize={onCustomize} />
       </AnimatePresence>
       <p className="pickup">
-        Pick it up at{' '}
-        <a href={MAPS_URL} target="_blank" rel="noopener noreferrer">
-          {SHOP_ADDRESS}
-        </a>
-        . We're open {SHOP_HOURS.charAt(0).toLowerCase() + SHOP_HOURS.slice(1)}, and you pay at the counter.
+        Add what you like, then pay at the counter. We'll call your name when it's ready.
       </p>
     </div>
   );
