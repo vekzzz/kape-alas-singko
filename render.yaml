@@ -1,0 +1,35 @@
+databases:
+  - name: kape-db
+    plan: free
+
+services:
+  - type: web
+    name: kape-api
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install --include=dev && npm run build
+    preDeployCommand: npm run migrate
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: kape-db
+          property: connectionString
+      - key: DATABASE_SSL
+        value: "true"
+      - key: STAFF_TOKEN
+        generateValue: true
+      - key: FRONTEND_ORIGIN
+        sync: false
+
+  - type: web
+    name: kape-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_ORDER_ENDPOINT
+        sync: false
