@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    # The backend tests and the smoke test run against a real Postgres, because the rules that matter
+    # (unique order numbers per day, composite foreign keys, check constraints) live in the database.
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: kape
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d kape"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 20
+
+    env:
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/kape_test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck (contract and backend)
+        run: npm run typecheck
+
+      - name: Tests (frontend, contract, backend)
+        run: npm test
+
+      # `npm run build` also typechecks the frontend. VITE_API_URL is any address: only a real deploy needs the real one.
+      - name: Build (frontend and the backend bundle)
+        run: npm run build
+        env:
+          VITE_API_URL: http://localhost:3000
+
+      # Run the API the way Render runs it: the bundled JavaScript under plain node, no tsx, migrating on start.
+      - name: Smoke-test the production bundle
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/kape
+          FRONTEND_ORIGIN: http://localhost:5173
+          PORT: "3000"
+        run: |
+          npm run start:prod -w backend > api.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://localhost:3000/health && break; sleep 1; done
+          curl -sf http://localhost:3000/health
+          npm run seed:prod -w backend
+          menu_items=$(curl -sf http://localhost:3000/api/v1/menu | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s).items.length))')
+          echo "menu items: $menu_items"
+          test "$menu_items" -ge 10
+          curl -sf http://localhost:3000/api/v1/shop > /dev/null
+          code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/api/v1/staff/orders)
+          echo "staff orders without a token: $code"
+          test "$code" = 401
+
+      - name: API log
+        if: failure()
+        run: cat api.log || true

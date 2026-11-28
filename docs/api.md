@@ -177,7 +177,7 @@ Menu and shop are cached by TanStack Query and persisted to localStorage for 24 
 
 ## Backend stack
 
-Node 20+, Express 5, TypeScript, Drizzle ORM with drizzle-kit migrations, Postgres on Neon free, zod v4, helmet, express-rate-limit, pino-http. Env vars are validated with zod at boot. Migrations run in Render's `preDeployCommand`. Tests use vitest and supertest against a real Postgres (docker compose locally, a service container in CI); price and slot logic also get pure unit tests. The root `package.json` becomes an npm workspace with `backend`, `frontend` and `packages/contract`.
+Node 20+, Express 5, TypeScript, Drizzle ORM with drizzle-kit migrations, Postgres on Neon free, zod v4, helmet, express-rate-limit, pino-http. Env vars are validated with zod at boot. Migrations run at the start of the API's start command (Render's pre-deploy commands are paid-only), against Neon's direct connection when `MIGRATION_DATABASE_URL` is set. Tests use vitest and supertest against a real Postgres (docker compose locally, a service container in CI); price and slot logic also get pure unit tests. The root `package.json` becomes an npm workspace with `backend`, `frontend` and `packages/contract`.
 
 ## Build order
 
@@ -188,7 +188,8 @@ One feature branch and PR per slice. The frontend keeps working at every merge.
 3. **Orders.** `POST /orders` with server pricing, idempotency and the 409s. `GET` and cancel by `publicId`. Checkout, tracker and cancelled UI on the frontend.
 4. **Staff API.** Auth, sessions, `staff:create`, the board endpoints, sold-out and pause, phone cleanup.
 5. **Staff board UI.** `staff.html`, new-order chime, "Done today" section.
-6. **Deploy.** Neon database, `render.yaml` rewrite (build from the repo root, remove the Render DB), env vars, README updates.
+6. **Deploy** (done: `render.yaml`, Neon, the production bundle, CI; see "Deploying" in the root README).
+   Originally:  Neon database, `render.yaml` rewrite (build from the repo root, remove the Render DB), env vars, README updates.
 
 ## Out of scope for v1
 

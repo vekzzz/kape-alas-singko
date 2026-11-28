@@ -4,10 +4,13 @@ const LOG_LEVELS = ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'
 
 const envSchema = z.object({
   DATABASE_URL: z.string().min(1, 'is required (see .env.example)'),
+  /** Optional: a direct (not pooled) connection string, used by migrate, seed and staff:create. Neon advises this. */
+  MIGRATION_DATABASE_URL: z.string().min(1).optional(),
+  /** "true" checks the server's certificate, "no-verify" encrypts without checking it, "false" is no encryption. */
   DATABASE_SSL: z
-    .enum(['true', 'false'])
+    .enum(['true', 'false', 'no-verify'])
     .default('false')
-    .transform((value) => value === 'true'),
+    .transform((value): boolean | 'no-verify' => (value === 'no-verify' ? 'no-verify' : value === 'true')),
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
   /** Comma-separated list of origins allowed by CORS. */
   FRONTEND_ORIGIN: z

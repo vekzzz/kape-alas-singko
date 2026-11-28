@@ -4,7 +4,7 @@ Express 5 + TypeScript + Postgres (Drizzle ORM) API for Kapé Alas-Singko. The p
 
 ## Status
 
-Built in slices. **Slices 1 to 5 are done:** the database, the public read endpoints, customer orders, the staff API, and the staff board screen (`/staff` in the frontend). What is left is deployment.
+Built in slices, all done: the database, the public read endpoints, customer orders, the staff API, the staff board screen (`/staff` in the frontend), and deployment (see "Deploying" in the [root README](../README.md)).
 
 ## Endpoints
 
@@ -84,6 +84,20 @@ Docker publishes Postgres on port **5433**, not 5432, so it does not fight with 
   - `is_sold_out` and `is_active` are left alone, because staff change them;
   - shop settings and opening hours are only created when missing, so edits in the database survive.
 
+## Production build
+
+`npm run build -w backend` typechecks, then bundles the API with esbuild into `backend/dist/` (plain JavaScript; `@kape/contract` is bundled in and everything else stays an import from `node_modules`). Run it the way Render does:
+
+```bash
+npm run start:prod -w backend   # migrates, then starts: node dist/migrate.js && node dist/index.js
+npm run seed:prod -w backend    # node dist/seed.js
+npm run staff:create:prod -w backend -- --name "Ana" --email ana@example.com
+```
+
+The `:prod` scripts need the environment variables set (they do not read `.env`). The database pool is small (5), waits up to 15 seconds for a sleeping database to wake, and logs instead of crashing when an idle connection is dropped, which Neon does when it suspends.
+
+CI (`.github/workflows/ci.yml`) typechecks, runs every test suite against a real Postgres, builds, and then starts the production bundle and checks it answers.
+
 ## Tests
 
 `npm test -w backend` runs vitest against a real Postgres. `test/globalSetup.ts` creates `kape_test` if needed, wipes it and applies the migrations once per run, so keep it separate from your dev database. It refuses to touch a database whose name does not contain "test". Set `TEST_DATABASE_URL` to use another server.
@@ -97,7 +111,8 @@ Checked with zod at boot (see [src/env.ts](src/env.ts)); a bad value stops the s
 | Variable | Meaning |
 | --- | --- |
 | `DATABASE_URL` | Postgres connection string (required) |
-| `DATABASE_SSL` | `true` for hosted Postgres that needs SSL (Neon, Render) |
+| `MIGRATION_DATABASE_URL` | Optional direct (not pooled) connection string. `migrate`, `seed` and `staff:create` use it when set. With Neon, `DATABASE_URL` is the pooled string and this is the direct one |
+| `DATABASE_SSL` | `true` for hosted Postgres (Neon, Render): encrypted, and the certificate is checked. `no-verify` encrypts without checking, for a self-signed certificate. `false` (default) for local |
 | `PORT` | Port to listen on, default 3000 |
 | `FRONTEND_ORIGIN` | Comma-separated origins allowed by CORS. Empty means no browser origin is allowed |
 | `LOG_LEVEL` | `info` (default), `debug`, `warn`, `error` or `silent` |

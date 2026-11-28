@@ -16,6 +16,24 @@ describe('loadEnv', () => {
     expect(() => loadEnv({})).toThrow(/DATABASE_URL/);
   });
 
+  it('reads the three database SSL modes', () => {
+    const ssl = (value: string) => loadEnv({ DATABASE_URL: 'postgres://x', DATABASE_SSL: value }).DATABASE_SSL;
+    expect(ssl('true')).toBe(true);
+    expect(ssl('false')).toBe(false);
+    expect(ssl('no-verify')).toBe('no-verify');
+    expect(() => ssl('maybe')).toThrow(/DATABASE_SSL/);
+  });
+
+  it('has an optional direct database url for migrations', () => {
+    expect(loadEnv({ DATABASE_URL: 'postgres://pooled' }).MIGRATION_DATABASE_URL).toBeUndefined();
+    expect(loadEnv({ DATABASE_URL: 'postgres://pooled', MIGRATION_DATABASE_URL: 'postgres://direct' }).MIGRATION_DATABASE_URL).toBe('postgres://direct');
+  });
+
+  it('reads TRUST_PROXY as a switch that is off by default', () => {
+    expect(loadEnv({ DATABASE_URL: 'postgres://x' }).TRUST_PROXY).toBe(false);
+    expect(loadEnv({ DATABASE_URL: 'postgres://x', TRUST_PROXY: 'true' }).TRUST_PROXY).toBe(true);
+  });
+
   it('rejects a bad port', () => {
     expect(() => loadEnv({ DATABASE_URL: 'postgres://x', PORT: 'abc' })).toThrow(/PORT/);
   });

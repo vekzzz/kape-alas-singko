@@ -6,9 +6,12 @@
   "engines": { "node": ">=20" },
   "scripts": {
     "dev": "tsx watch --env-file-if-exists=.env src/index.ts",
-    "build": "tsc --noEmit",
+    "build": "tsc --noEmit && node build.mjs",
     "typecheck": "tsc --noEmit",
-    "start": "tsx src/index.ts",
+    "start": "node dist/index.js",
+    "start:prod": "node dist/migrate.js && node dist/index.js",
+    "seed:prod": "node dist/seed.js",
+    "staff:create:prod": "node dist/staffCreate.js",
     "db:generate": "drizzle-kit generate",
     "migrate": "tsx --env-file-if-exists=.env src/migrate.ts",
     "seed": "tsx --env-file-if-exists=.env src/seed.ts",
@@ -26,7 +29,6 @@
     "pg": "^8.13.0",
     "pino": "^10.0.0",
     "pino-http": "^11.0.0",
-    "tsx": "^4.19.0",
     "zod": "^4.6.0"
   },
   "devDependencies": {
@@ -36,7 +38,9 @@
     "@types/pg": "^8.11.0",
     "@types/supertest": "^7.2.0",
     "drizzle-kit": "^0.31.0",
+    "esbuild": "^0.25.0",
     "supertest": "^7.1.0",
+    "tsx": "^4.19.0",
     "typescript": "^5.6.0",
     "vitest": "^5.1.0"
   }

@@ -44,7 +44,7 @@ if (values.password === undefined) {
 }
 
 const env = loadEnv();
-const { db, pool } = createDatabase(env.DATABASE_URL, { ssl: env.DATABASE_SSL });
+const { db, pool } = createDatabase(env.MIGRATION_DATABASE_URL ?? env.DATABASE_URL, { ssl: env.DATABASE_SSL });
 try {
   const created = await createStaff(db, { name: values.name, email: values.email, password, role: values.role as 'barista' | 'manager' });
   console.log(`Created ${created.role} ${created.name} (${values.email.toLowerCase()}).`);

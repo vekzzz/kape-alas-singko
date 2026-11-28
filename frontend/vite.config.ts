@@ -1,5 +1,5 @@
 import { fileURLToPath } from 'node:url';
-import { defineConfig, type Plugin } from 'vite';
+import { defineConfig, loadEnv, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
@@ -23,8 +23,25 @@ function staffRoute(): Plugin {
   };
 }
 
-export default defineConfig({
-  plugins: [react(), tailwindcss(), staffRoute()],
+/**
+ * VITE_API_URL is baked into the build. If it is missing, the site would deploy fine and then show every
+ * customer "We couldn't load the menu", so stop the build on the host instead. (Render sets RENDER=true.)
+ */
+function requireApiUrlOnHost(mode: string): Plugin {
+  return {
+    name: 'require-api-url',
+    apply: 'build',
+    buildStart() {
+      const env = loadEnv(mode, process.cwd(), 'VITE_');
+      if (process.env.RENDER && !env.VITE_API_URL) {
+        throw new Error('VITE_API_URL is not set. Set it on the static site to the API address, for example https://kape-api.onrender.com, then deploy again.');
+      }
+    },
+  };
+}
+
+export default defineConfig(({ mode }) => ({
+  plugins: [react(), tailwindcss(), staffRoute(), requireApiUrlOnHost(mode)],
   build: {
     rollupOptions: {
       // Two pages: the customer app, and the bar's order board.
@@ -34,4 +51,4 @@ export default defineConfig({
       },
     },
   },
-});
+}));
