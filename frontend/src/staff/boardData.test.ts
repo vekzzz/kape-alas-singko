@@ -35,7 +35,9 @@ describe('applyBoardReply', () => {
   const reply = (date: string, orders = [order('a', 10)]) => ({ date, orders, cursor: '2026-11-28T01:59:55.000Z' });
 
   it('starts the board from the first reply', () => {
-    expect(applyBoardReply(undefined, reply('2026-11-28'))).toEqual({ date: '2026-11-28', orders: [order('a', 10)], cursor: '2026-11-28T01:59:55.000Z' });
+    // Build the order once: the fixture stamps the current time into each one it makes, so two calls can differ.
+    const first = order('a', 10);
+    expect(applyBoardReply(undefined, reply('2026-11-28', [first]))).toEqual({ date: '2026-11-28', orders: [first], cursor: '2026-11-28T01:59:55.000Z' });
   });
 
   it('folds later replies into what is held and takes the new cursor', () => {
