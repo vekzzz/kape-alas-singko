@@ -1,7 +1,12 @@
-import { readFile } from 'node:fs/promises';
-import { pool } from './db.js';
+import { createDatabase } from './db/client.js';
+import { runMigrations } from './db/migrations.js';
+import { loadEnv } from './env.js';
 
-const schema = await readFile(new URL('../db/schema.sql', import.meta.url), 'utf8');
-await pool.query(schema);
-await pool.end();
-console.log('Database schema is up to date.');
+const env = loadEnv();
+const { db, pool } = createDatabase(env.DATABASE_URL, { ssl: env.DATABASE_SSL });
+try {
+  await runMigrations(db);
+  console.log('Database schema is up to date.');
+} finally {
+  await pool.end();
+}
