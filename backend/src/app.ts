@@ -4,19 +4,22 @@ import express, { type NextFunction, type Request, type Response } from 'express
 import helmet from 'helmet';
 import { pinoHttp } from 'pino-http';
 import type { Database } from './db/client.js';
+import { createPublicRouter } from './routes/publicRouter.js';
 
 export type AppOptions = {
   db: Database;
   /** Origins allowed by CORS. Empty means no cross-origin browser may call the API. */
   frontendOrigins: string[];
   logLevel?: string;
+  /** The clock. Tests pass a fixed one. */
+  now?: () => Date;
 };
 
 export function errorBody(code: ErrorCode, message: string, extra: Partial<ApiError['error']> = {}): ApiError {
   return { error: { code, message, ...extra } };
 }
 
-export function createApp({ frontendOrigins, logLevel = 'info' }: AppOptions) {
+export function createApp({ db, frontendOrigins, logLevel = 'info', now = () => new Date() }: AppOptions) {
   const app = express();
 
   app.disable('x-powered-by');
@@ -35,8 +38,7 @@ export function createApp({ frontendOrigins, logLevel = 'info' }: AppOptions) {
     res.json({ ok: true });
   });
 
-  const api = express.Router();
-  app.use('/api/v1', api);
+  app.use('/api/v1', createPublicRouter({ db, now }));
 
   app.use((_req, res) => {
     res.status(404).json(errorBody('NOT_FOUND', 'Nothing here.'));
