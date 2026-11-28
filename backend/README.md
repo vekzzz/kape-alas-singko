@@ -4,7 +4,7 @@ Express 5 + TypeScript + Postgres (Drizzle ORM) API for Kapé Alas-Singko. The p
 
 ## Status
 
-Built in slices. **Slices 1 to 4 are done:** the database, the public read endpoints, customer orders, and the staff API. The staff board screen is slice 5, so for now staff use these endpoints directly (see "Staff" below).
+Built in slices. **Slices 1 to 5 are done:** the database, the public read endpoints, customer orders, the staff API, and the staff board screen (`/staff` in the frontend). What is left is deployment.
 
 ## Endpoints
 

@@ -25,7 +25,7 @@ export class ApiRequestError extends Error {
 /** Anything with a `parse` that returns T, such as a zod schema from @kape/contract. */
 type Parser<T> = { parse: (data: unknown) => T };
 
-type RequestOptions = { method?: 'GET' | 'POST'; body?: unknown; headers?: Record<string, string>; signal?: AbortSignal };
+type RequestOptions = { method?: 'GET' | 'POST' | 'PATCH'; body?: unknown; headers?: Record<string, string>; signal?: AbortSignal };
 
 async function request<T>(path: string, schema: Parser<T>, { method = 'GET', body, headers = {}, signal }: RequestOptions): Promise<T> {
   const timeout = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
@@ -44,11 +44,15 @@ async function request<T>(path: string, schema: Parser<T>, { method = 'GET', bod
   return schema.parse(await response.json());
 }
 
-export function apiGet<T>(path: string, schema: Parser<T>, signal?: AbortSignal): Promise<T> {
-  return request(path, schema, { signal });
+export function apiGet<T>(path: string, schema: Parser<T>, signal?: AbortSignal, headers?: Record<string, string>): Promise<T> {
+  return request(path, schema, { signal, headers });
 }
 
 /** `body` is sent as JSON. Pass `Idempotency-Key` in `headers` for anything that creates something. */
 export function apiPost<T>(path: string, schema: Parser<T>, body?: unknown, headers?: Record<string, string>): Promise<T> {
   return request(path, schema, { method: 'POST', body: body ?? {}, headers });
+}
+
+export function apiPatch<T>(path: string, schema: Parser<T>, body: unknown, headers?: Record<string, string>): Promise<T> {
+  return request(path, schema, { method: 'PATCH', body, headers });
 }

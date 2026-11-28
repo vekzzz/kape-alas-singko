@@ -1,4 +1,4 @@
-import type { OrderResponse } from '@kape/contract';
+import type { OrderResponse, StaffOrder } from '@kape/contract';
 
 /** An order as the API sends it back, due to be picked up half an hour from now. */
 export function makeOrder(overrides: Partial<OrderResponse> = {}): OrderResponse {
@@ -16,6 +16,20 @@ export function makeOrder(overrides: Partial<OrderResponse> = {}): OrderResponse
     paid: false,
     lines: [{ itemName: 'Latte', optionLabels: ['Regular', 'Hot', 'Whole milk'], note: null, quantity: 2, unitPriceCentavos: 17000, lineTotalCentavos: 34000 }],
     events: [{ status: 'received', at: new Date(placed).toISOString() }],
+    ...overrides,
+  };
+}
+
+/** An order as the board receives it. */
+export function makeStaffOrder(overrides: Partial<StaffOrder> = {}): StaffOrder {
+  const order = makeOrder(overrides);
+  return {
+    ...order,
+    businessDate: '2026-11-28',
+    phone: '09171234567',
+    paymentMethod: null,
+    paidAt: null,
+    updatedAt: order.placedAt,
     ...overrides,
   };
 }

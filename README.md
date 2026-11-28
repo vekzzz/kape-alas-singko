@@ -24,11 +24,11 @@ npm run dev:backend         # http://localhost:3000
 npm run dev:frontend        # http://localhost:5173 (second terminal)
 ```
 
-The API is being built in slices (see [docs/api.md](docs/api.md)); customer ordering and the staff API work end to end; the staff board screen comes next.
+The API is being built in slices (see [docs/api.md](docs/api.md)); customer ordering and the staff board work end to end; deployment is what is left.
 
 ## How they connect
 
-The frontend reads the menu, hours and pickup times from `VITE_API_URL`, places orders with `POST /api/v1/orders` and checks on each one by its `publicId` every 15 seconds. The endpoints are in [docs/api.md](docs/api.md) and [backend/README.md](backend/README.md). The staff API (sign in, the order board, status, payment, sold-out, pause) is built; the board screen is slice 5, so until then drive it with the endpoints in [backend/README.md](backend/README.md). Create a staff account with `npm run staff:create -- --name "Ana" --email ana@example.com`.
+The frontend reads the menu, hours and pickup times from `VITE_API_URL`, places orders with `POST /api/v1/orders` and checks on each one by its `publicId` every 15 seconds. The endpoints are in [docs/api.md](docs/api.md) and [backend/README.md](backend/README.md). The bar runs on the staff board at `/staff` (sign in, a live queue with a new-order chime, status and payment buttons, sold-out and pause controls). Create a staff account first with `npm run staff:create -- --name "Ana" --email ana@example.com`. The endpoints behind it are in [backend/README.md](backend/README.md).
 
 ## Deploying on Render
 

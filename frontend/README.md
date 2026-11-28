@@ -25,6 +25,19 @@ Checkout sends the cart to `POST /api/v1/orders` as item ids and option choices 
 
 The page has to stay open in the customer's browser for the alert to arrive: sending a push to a closed page would need a push server, which this project does not have. Some mobile browsers, Chrome on Android among them, only show system notifications from a service worker. On those browsers the customer still gets the chime, the vibration and the banner.
 
+## The staff board
+
+The bar's order screen is a second page of the same app: `staff.html`, served at `/staff` (in dev and `vite preview` a small plugin in `vite.config.ts` does the rewrite; the host needs the same rule). It has its own entry (`src/staff/main.tsx`) and its own stylesheet (`src/staff/staff.css`), so the customer app's look and bundle are untouched. It shares the API client, the contract package and the time helpers.
+
+- **Signing in.** Email and password go to `POST /api/v1/staff/login`. The token is kept in `localStorage`, so a reload or a sleeping tablet does not end the shift; if the server says the session is over (401), the board drops back to the sign-in screen.
+- **Start shift.** Browsers only allow sound after a tap, so the board opens with a "Start shift" button that unlocks audio. After that, a new order plays a chime and, if the tab is in the background, puts the number of new orders in the tab title. The first load is what was already there, so it does not chime. "Test sound" plays it again.
+- **The queue.** Three columns (New, Making, Ready) with the soonest pickup first, and "Done today" for collected and cancelled orders. It asks the API every 5 seconds, even in a background tab, and after the first load only for what changed since the last reply (`?since=`), merging by `publicId`. If the day rolls over it asks for the whole new day. If the connection drops, the last board stays on screen with an "Offline, trying again" note.
+- **A ticket** shows the order number, name, dine in or take out, phone (tap to call), pickup time ("in 12 min", "5 min late"), each line with its choices and note, the total, and whether it is paid. Buttons: the next step, "Back to…" to undo a mis-tap, "Cancel…" with a reason (we ran out, customer asked, no-show, other), and "Paid Cash" or "Paid GCash". Buttons wait for the server and then show its answer straight away.
+- **Two people at once.** Each press says what status the board thinks the order has. If someone else already moved it, the board shows the order as it really is and a message names what happened, instead of undoing their work.
+- **Menu and pause.** "Menu" lists every item with a switch for sold out. "Pause online orders" asks twice and then shows a red banner with a Resume button. Both take effect at once for checkout.
+
+Everything the board decides about moves (one step forward or back, cancel before collected) comes from the same rules the server enforces, in `packages/contract/src/staff.ts`.
+
 ## Getting started
 
 ```bash
@@ -74,6 +87,19 @@ src/
 
   hooks/useNow.ts           The current time, refreshed every 20 seconds
   hooks/useOrderTracking.ts Looks up each order on the way until it is finished, and sounds the ready alert
+
+  staff/                    The bar's order board (staff.html)
+    main.tsx                Entry point for /staff
+    StaffApp.tsx            Sign in, or the board
+    Board.tsx               Header, columns, Done today, Start shift, messages
+    OrderTicket.tsx         One order and its buttons
+    ShopControls.tsx        Pause online orders, mark items sold out
+    boardData.ts            Merging polls, grouping into columns, pickup timing (plain functions)
+    useBoard.ts             Polls the API; chimes on new orders
+    useOrderActions.ts      Move, cancel and pay buttons
+    sessionStore.ts         The signed-in barista (zustand, saved)
+    staffAlert.ts           Unlocking audio, the chime, the tab title
+    staff.css               The board's styles
 
   components/
     stage/                  The main screen

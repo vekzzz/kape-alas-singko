@@ -173,7 +173,7 @@ Menu and shop are cached by TanStack Query and persisted to localStorage for 24 
 - **zustand + `persist`** holds client state: the cart, the order type and the order history, with versioned storage keys. It replaces `CartProvider`, `cartReducer`, `cartStorage`, `orderHistory` and `useOrderStatuses`. Saved cart lines are checked against the menu once it loads.
 - `data/menu.ts`, `STAGE_COLORS`, the id checks in `pickVessel`, `pickupSlots.ts` and the hours constants in `time.ts` are deleted once the API serves them.
 - A real `cancelled` state: the tracker shows a message per reason, the orders pill drops the order, and polling stops.
-- The staff board is a second Vite entry, `frontend/staff.html`, sharing components and the contract package. Render rewrites `/staff` to `/staff.html`.
+- The staff board is a second Vite entry, `frontend/staff.html`, sharing the API client and the contract package (it has its own stylesheet). **As built (slice 5):** it is served at `/staff`; Vite does that rewrite in dev and preview, and the static host needs the same rule (Render: rewrite `/staff` to `/staff.html`, slice 6).
 
 ## Backend stack
 
