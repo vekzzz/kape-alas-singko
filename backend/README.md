@@ -4,7 +4,7 @@ Express 5 + TypeScript + Postgres (Drizzle ORM) API for Kapé Alas-Singko. The p
 
 ## Status
 
-Built in slices. **Slices 1 to 3 are done:** the database, the public read endpoints, and customer orders. Staff (login, the order board, status changes, payment, sold-out, pause) arrive in slices 4 and 5, so for now **nothing moves an order past `received`** except edits in the database.
+Built in slices. **Slices 1 to 4 are done:** the database, the public read endpoints, customer orders, and the staff API. The staff board screen is slice 5, so for now staff use these endpoints directly (see "Staff" below).
 
 ## Endpoints
 
@@ -19,6 +19,29 @@ Built in slices. **Slices 1 to 3 are done:** the database, the public read endpo
 | POST | `/api/v1/orders/:publicId/cancel` | Cancel an order, only while it is still `received`. |
 
 Prices are integer centavos. Every request and reply shape is a zod schema in `packages/contract/src`, shared with the frontend. Errors look like `{ "error": { "code", "message", "fields?", "details?" } }`.
+
+### Staff
+
+Everything under `/api/v1/staff` except login needs `Authorization: Bearer <token>`.
+
+| Method | Path | What |
+| --- | --- | --- |
+| POST | `/staff/login` | `{ email, password }` gives `{ token, staff, expiresAt }`. |
+| POST | `/staff/logout` | Ends the session. |
+| GET | `/staff/me` | Who the token belongs to, and when it expires. |
+| GET | `/staff/orders?date=&since=` | One business day's orders (default today), soonest pickup first, with the customer's phone and payment. With `since` (the `cursor` from the last reply) only orders that changed after it. |
+| POST | `/staff/orders/:publicId/status` | `{ from, to, reason? }`. One step forward or back, or `cancelled` with a reason. |
+| POST | `/staff/orders/:publicId/payment` | `{ method: "cash" \| "gcash" }`. |
+| PATCH | `/staff/menu-items/:id` | `{ isSoldOut }`. |
+| PATCH | `/staff/shop` | `{ acceptingOrders }`: pause or resume online orders. |
+
+- **Accounts.** There is no sign-up. Create one with `npm run staff:create -- --name "Ana" --email ana@example.com --role manager`; it asks for the password (at least 10 characters) without echoing it. Passwords are stored as argon2id hashes. `barista` and `manager` can do the same things for now.
+- **Sessions.** The token is 256 random bits; only its SHA-256 hash is stored, so a copy of the database cannot be used to sign in. A session lasts 12 hours and is pushed forward while it is used (at most once a minute, so the board's polling does not write every few seconds). Logging out ends it. A wrong password, an unknown email and a switched-off account all get the same answer in about the same time. Sign-in is limited to 10 attempts per 15 minutes per address.
+- **Status moves** are checked by the shared rules in `packages/contract/src/staff.ts`. The caller says what it thinks the status is (`from`) and the update only applies if that is still true, so two baristas, a stale board, or a barista and a customer cancelling at the same instant cannot step on each other: the loser gets `409 STATUS_CONFLICT` with the order as it now is in `details.order`. Every change is written to the order's history with the staff member's id. A skipped step or a move from `cancelled` is `400 INVALID_TRANSITION`.
+- **Polling.** `cursor` runs 5 seconds behind the server clock, so an order saved a moment before the poll is never missed; the board should replace orders by `publicId`, since a few come back twice.
+- **Payment** is separate from status and never holds an order up. Paying again corrects the method and keeps the first time. A cancelled order cannot be paid.
+- **Sold out and pause** take effect at once for checkout (`ITEM_UNAVAILABLE`, `ORDERS_PAUSED`); customers' screens catch up within a minute.
+- **Tidying.** There is no scheduler on the free host, so when someone signs in the server clears customers' phone numbers 30 days after their order was collected or cancelled, and deletes sessions that ended over a week ago.
 
 ### Placing an order
 
@@ -44,6 +67,7 @@ cp backend/.env.example backend/.env
 npm run db:up                     # Postgres 17 in Docker, on localhost:5433
 npm run db:migrate                # applies backend/drizzle/*.sql
 npm run db:seed                   # menu, option prices, shop hours
+npm run staff:create -- --name "Ana" --email ana@example.com --role manager
 npm run dev:backend               # http://localhost:3000
 npm test                          # frontend, contract and backend tests
 ```

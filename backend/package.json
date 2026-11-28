@@ -12,10 +12,12 @@
     "db:generate": "drizzle-kit generate",
     "migrate": "tsx --env-file-if-exists=.env src/migrate.ts",
     "seed": "tsx --env-file-if-exists=.env src/seed.ts",
+    "staff:create": "tsx --env-file-if-exists=.env src/staffCreate.ts",
     "test": "vitest run"
   },
   "dependencies": {
     "@kape/contract": "*",
+    "@node-rs/argon2": "^2.0.2",
     "cors": "^2.8.5",
     "drizzle-orm": "^0.45.0",
     "express": "^5.1.0",

@@ -124,6 +124,8 @@ Allowed only while the status is `received`. Writes a `cancelled` event with act
 | `POST /staff/logout` | Revokes the session. |
 | `GET /staff/me` | The logged-in staff member. |
 
+**As built (slice 4).** `POST /staff/login` and the board endpoints answer as sketched, with these details: login is limited to 10 attempts per 15 minutes per address; `GET /staff/me` replies `{ staff, expiresAt }`; `POST /staff/logout` replies `{ ok: true }`; status and payment replies are the updated staff order; a `409 STATUS_CONFLICT` carries the current order in `details.order`; the `cursor` runs 5 seconds behind the server clock and the board replaces orders by `publicId`; a cancelled order cannot be paid (`409 INVALID_TRANSITION`). The status rules live in `packages/contract/src/staff.ts` so the board only offers moves the server allows.
+
 Tokens are opaque and random. Only their SHA-256 hash is stored in `staff_sessions`. Sessions last 12 h and extend while in use. The first manager is created with `npm run staff:create`. `STAFF_TOKEN` is removed.
 
 ### `GET /api/v1/staff/orders?date=YYYY-MM-DD&since=<cursor>`

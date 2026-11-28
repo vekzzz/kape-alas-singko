@@ -6,6 +6,7 @@ import type { Database } from './db/client.js';
 import { HttpError, errorBody } from './http.js';
 import { createOrdersRouter } from './routes/ordersRouter.js';
 import { createPublicRouter } from './routes/publicRouter.js';
+import { createStaffRouter } from './routes/staffRouter.js';
 
 export { errorBody };
 
@@ -22,6 +23,8 @@ export type AppOptions = {
   ordersPerMinute?: number;
   /** Makes order numbers. Tests swap it to force a clash. */
   generateNumber?: (prefix: string) => string;
+  /** Sign-in attempts one address may make per 15 minutes. */
+  loginAttempts?: number;
 };
 
 export function createApp({
@@ -32,6 +35,7 @@ export function createApp({
   trustProxy = false,
   ordersPerMinute = 10,
   generateNumber,
+  loginAttempts = 10,
 }: AppOptions) {
   const app = express();
 
@@ -55,6 +59,10 @@ export function createApp({
 
   app.use('/api/v1', createPublicRouter({ db, now }));
   app.use('/api/v1', createOrdersRouter({ db, now, ordersPerMinute, generateNumber }));
+  app.use(
+    '/api/v1/staff',
+    createStaffRouter({ db, now, loginAttempts, log: logLevel === 'silent' ? undefined : (message, error) => console.error(message, error) }),
+  );
 
   app.use((_req, res) => {
     res.status(404).json(errorBody('NOT_FOUND', 'Nothing here.'));

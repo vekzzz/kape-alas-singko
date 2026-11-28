@@ -10,6 +10,7 @@
     "db:generate": "npm run db:generate -w backend",
     "db:migrate": "npm run migrate -w backend",
     "db:seed": "npm run seed -w backend",
+    "staff:create": "npm run staff:create -w backend --",
     "build": "npm run build -w frontend && npm run build -w backend",
     "typecheck": "npm run typecheck -w packages/contract && npm run typecheck -w backend",
     "test": "npm test -w frontend && npm test -w packages/contract && npm test -w backend"

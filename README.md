@@ -24,11 +24,11 @@ npm run dev:backend         # http://localhost:3000
 npm run dev:frontend        # http://localhost:5173 (second terminal)
 ```
 
-The API is being built in slices (see [docs/api.md](docs/api.md)); customer ordering works end to end, staff tools come next.
+The API is being built in slices (see [docs/api.md](docs/api.md)); customer ordering and the staff API work end to end; the staff board screen comes next.
 
 ## How they connect
 
-The frontend reads the menu, hours and pickup times from `VITE_API_URL`, places orders with `POST /api/v1/orders` and checks on each one by its `publicId` every 15 seconds. The endpoints are in [docs/api.md](docs/api.md) and [backend/README.md](backend/README.md). Nothing in the app moves an order past `received` yet (the staff side is slices 4 and 5), so until then change an order's status in the database to see the tracker move.
+The frontend reads the menu, hours and pickup times from `VITE_API_URL`, places orders with `POST /api/v1/orders` and checks on each one by its `publicId` every 15 seconds. The endpoints are in [docs/api.md](docs/api.md) and [backend/README.md](backend/README.md). The staff API (sign in, the order board, status, payment, sold-out, pause) is built; the board screen is slice 5, so until then drive it with the endpoints in [backend/README.md](backend/README.md). Create a staff account with `npm run staff:create -- --name "Ana" --email ana@example.com`.
 
 ## Deploying on Render
 
