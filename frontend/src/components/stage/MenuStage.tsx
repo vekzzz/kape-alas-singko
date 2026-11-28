@@ -1,19 +1,21 @@
 import { useEffect, useEffectEvent, useMemo, useRef, useState, type PointerEvent, type WheelEvent } from 'react';
+import { useCatalog } from '../../data/CatalogContext';
 import { sortedMenu, type MenuItem } from '../../data/menu';
 import type { OrderType } from '../../lib/orders';
+import { manilaMinutes } from '../../lib/time';
 import { BuyPanel } from './BuyPanel';
 import { ItemTitle } from './ItemTitle';
 import { MenuRail } from './MenuRail';
 import { MobileDock } from './MobileDock';
 import { ProductShowcase } from './ProductShowcase';
 import { StageBackdrop } from './StageBackdrop';
-import { stageColorsFor } from './stageColors';
 import { StageHeader } from './StageHeader';
 
 const WHEEL_COOLDOWN_MS = 650;
 const MIN_WHEEL_DELTA = 30;
 
 type MenuStageProps = {
+  /** Current time in milliseconds. */
   now: number;
   orderType: OrderType;
   onChangeOrderType: () => void;
@@ -22,14 +24,16 @@ type MenuStageProps = {
 };
 
 export function MenuStage({ now, orderType, onChangeOrderType, onCustomize, onOpenCart }: MenuStageProps) {
-  const hour = Math.floor(now / 60);
-  const items = useMemo(() => sortedMenu(hour * 60), [hour]);
+  const catalog = useCatalog();
+  const hour = Math.floor(manilaMinutes(new Date(now)) / 60);
+  const items = useMemo(() => sortedMenu(catalog, hour * 60), [catalog, hour]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
   const stageRef = useRef<HTMLElement>(null);
   const wheelLockedUntil = useRef(0);
 
-  const item = items[activeIndex];
+  // The menu can shrink while it is open (an item taken off), so never point past the end.
+  const item = items[Math.min(activeIndex, items.length - 1)];
 
   const goTo = (index: number, towards: 1 | -1) => {
     setDirection(towards);
@@ -37,7 +41,7 @@ export function MenuStage({ now, orderType, onChangeOrderType, onCustomize, onOp
   };
   const step = (towards: 1 | -1) => goTo(activeIndex + towards, towards);
 
-  usePageColors(item.id);
+  usePageColors(item?.stageBackground, item?.stageInk);
 
   const onKeyDown = useEffectEvent((event: KeyboardEvent) => {
     if (document.querySelector('dialog[open]')) return;
@@ -82,6 +86,14 @@ export function MenuStage({ now, orderType, onChangeOrderType, onCustomize, onOp
     stageRef.current?.style.setProperty('--py', '0');
   };
 
+  if (!item) {
+    return (
+      <main id="top" className="stage">
+        <p className="lead">The menu is empty right now. Please check back soon.</p>
+      </main>
+    );
+  }
+
   return (
     <main id="top" ref={stageRef} className="stage" onPointerMove={handlePointerMove} onPointerLeave={resetParallax} onWheel={handleWheel}>
       <div className="orbs" aria-hidden="true">
@@ -105,8 +117,11 @@ export function MenuStage({ now, orderType, onChangeOrderType, onCustomize, onOp
   );
 }
 
-function usePageColors(itemId: string) {
-  const { background, ink } = stageColorsFor(itemId);
+const FALLBACK_COLORS = { background: '#113a4a', ink: '#c6ecff' };
+
+function usePageColors(stageBackground?: string, stageInk?: string) {
+  const background = stageBackground ?? FALLBACK_COLORS.background;
+  const ink = stageInk ?? FALLBACK_COLORS.ink;
 
   useEffect(() => {
     const root = document.documentElement.style;

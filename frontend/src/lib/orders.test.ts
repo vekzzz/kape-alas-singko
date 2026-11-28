@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { catalog } from '../test/menuFixture';
 import { newOrderNumber, normalizePhone, orderPayload, sendOrder, type PlacedOrder } from './orders';
 
 const order: PlacedOrder = {
@@ -39,13 +40,13 @@ describe('normalizePhone', () => {
 
 describe('orderPayload', () => {
   it('spells out each line for the bar', () => {
-    expect(orderPayload(order).items[0]).toMatchObject({ item: 'Latte', quantity: 2, note: 'less ice' });
-    expect(orderPayload(order).items[0]?.options).toContain('Large');
-    expect(orderPayload(order).pickupAt).toBe('2026-11-18T23:15:00.000Z');
+    expect(orderPayload(order, catalog).items[0]).toMatchObject({ item: 'Latte', quantity: 2, note: 'less ice' });
+    expect(orderPayload(order, catalog).items[0]?.options).toContain('Large');
+    expect(orderPayload(order, catalog).pickupAt).toBe('2026-11-18T23:15:00.000Z');
   });
 
   it('tells the bar whether the order is for here or to go', () => {
-    expect(orderPayload(order).orderType).toBe('dine-in');
+    expect(orderPayload(order, catalog).orderType).toBe('dine-in');
   });
 });
 
@@ -55,22 +56,22 @@ describe('sendOrder', () => {
   it('does not send when no endpoint is set', async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
-    await expect(sendOrder(order, '')).resolves.toEqual({ sent: false });
+    await expect(sendOrder(order, catalog, '')).resolves.toEqual({ sent: false });
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('uses the number the endpoint replies with', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ number: 'A5-001' }))));
-    await expect(sendOrder(order, 'https://example.test/orders')).resolves.toEqual({ sent: true, number: 'A5-001' });
+    await expect(sendOrder(order, catalog, 'https://example.test/orders')).resolves.toEqual({ sent: true, number: 'A5-001' });
   });
 
   it('accepts a reply that is not JSON', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('ok')));
-    await expect(sendOrder(order, 'https://example.test/orders')).resolves.toEqual({ sent: true, number: undefined });
+    await expect(sendOrder(order, catalog, 'https://example.test/orders')).resolves.toEqual({ sent: true, number: undefined });
   });
 
   it('throws when the endpoint fails, so the cart is kept', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('', { status: 500 })));
-    await expect(sendOrder(order, 'https://example.test/orders')).rejects.toThrow('500');
+    await expect(sendOrder(order, catalog, 'https://example.test/orders')).rejects.toThrow('500');
   });
 });

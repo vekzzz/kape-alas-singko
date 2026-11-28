@@ -4,7 +4,14 @@ Order-ahead page for a coffee bar on Magsaysay Avenue, Naga City. One product fi
 
 It starts like a fast-food kiosk: a welcome screen asks **Dine in** or **Take out** (changeable later from the header, remembered for the browser session). Checkout runs in the order panel one step at a time: review the order, then details (name and ready time), then a big order number to show at the counter.
 
-Built with React 19, TypeScript, Vite and Motion. No backend of its own: the cart lives in `localStorage` and orders are paid at the counter.
+Built with React 19, TypeScript, Vite and Motion. The menu, prices, opening hours and pickup times come from the API in `../backend` (`VITE_API_URL`). The cart and your recent orders live in `localStorage`, and orders are paid at the counter.
+
+## Where the data comes from
+
+- **Server data** (TanStack Query, `src/api/`): `GET /api/v1/menu`, `/shop` and `/pickup-slots`, checked against the zod schemas in `@kape/contract`. The menu and shop are looked at again every minute and when the tab comes back. They are also saved to `localStorage` for 24 hours, so a returning customer sees the last menu straight away while the new one loads. Pickup times are never saved.
+- **The first visit** can be slow, because the free API host sleeps when idle. The welcome screen shows at once, with a placeholder where the hours go. The menu stage says it is warming up, or offers a retry if the API cannot be reached.
+- **Browser state** (zustand with `persist`, `src/cart/`): the cart, the orders placed in this browser, and dine in or take out for the session. Storage keys are versioned.
+- **Prices** arrive as integer centavos and are shown in pesos. The server will recompute them when orders move to the new API.
 
 ## Receiving orders
 
@@ -44,27 +51,35 @@ src/
   App.tsx                   Page shell: welcome or stage, the two side panels, ready banner
   styles.css                All styles (plain CSS with custom properties)
 
-  data/menu.ts              Menu items, groups and lookups. Edit the menu here.
+  api/                      Talking to the backend
+    client.ts               apiGet: fetch, timeout, errors, zod parsing
+    queries.ts              The menu, shop and pickup-slot queries and how often they refresh
+    queryClient.ts          Query client and the saved (24 h) menu and shop cache
+    hooks.ts                useMenu, useShop, usePickupSlotsQuery
+
+  data/menu.ts              Turns the API menu into the Catalog the screens use: items, groups, defaults, extras
+  data/CatalogContext.ts    The loaded menu for components (useCatalog)
 
   lib/                      Plain functions, no React
     pricing.ts              Drink options, prices, cart line type
-    time.ts                 Opening hours and Manila time
-    pickupSlots.ts          Pickup times offered at checkout
+    time.ts                 Manila time and time formatting
+    pickupSlots.ts          Labels the pickup times the server offers
     orders.ts               Order numbers, the payload the bar receives, sending it
     orderStatus.ts          Asking the bar whether an order is ready
     readyAlert.ts           Notification, chime and vibration when it is
-    shop.ts                 Address, hours text, map link
+    shop.ts                 Open now or closed, hours text, map link, from the shop's hours
     flyToCart.ts            The "added to cart" animation
 
   cart/                     Cart state
     cartReducer.ts          Every change to the cart goes through here
-    cartStorage.ts          Saving and loading from localStorage
-    orderHistory.ts         Orders placed in this browser, each kept until two hours after pickup
-    orderTypeStorage.ts     Dine in or take out, for this browser session
-    CartProvider.tsx        Provides the cart to the app
+    cartStore.ts            The cart (zustand, saved to localStorage)
+    cartStorage.ts          Checks saved cart lines are well formed
+    orderStore.ts           Orders placed in this browser (zustand, saved)
+    orderHistory.ts         Each order is kept until two hours after pickup, at most five
+    orderTypeStore.ts       Dine in or take out, for this browser session
     useCart.ts              Read and update the cart from any component
 
-  hooks/useManilaMinutes.ts Current Manila time, refreshed every 20 seconds
+  hooks/useNow.ts           The current time, refreshed every 20 seconds
   hooks/useOrderStatus.ts   Checks each order's status until it is picked up
 
   components/
@@ -76,7 +91,6 @@ src/
       StageBackdrop.tsx     Ring, disc and splash behind the product
       BuyPanel.tsx          Price, description, add to order
       MenuRail.tsx          Scrolling strip of every product
-      stageColors.ts        Page colours for each product
     product-art/            SVG drawings of every product
       ProductArt.tsx        Side view, picks the right vessel
       ProductIcon.tsx       Small top view for lists
@@ -94,11 +108,10 @@ Tests sit next to the file they test (`pricing.ts` → `pricing.test.ts`).
 
 | To change | Edit |
 | --- | --- |
-| A product's name, price or description | `src/data/menu.ts` |
-| Add a product | Add it to `MENU_ITEMS` in `src/data/menu.ts`, give it page colours in `stage/stageColors.ts`, and check how `product-art/artUtils.ts → pickVessel` draws it |
-| Extra costs (large, oat milk, extra shot) | `EXTRA_COSTS` in `src/lib/pricing.ts` |
-| Shop address | `SHOP_ADDRESS` in `src/lib/shop.ts` (also the JSON-LD in `index.html`) |
-| Opening hours | `OPENING_TIME` and `CLOSING_TIME` in `src/lib/time.ts`, and the JSON-LD in `index.html` |
+| A product's name, price, description or page colours | `backend/src/seed/data.ts`, then `npm run db:seed` |
+| Add a product | Add it to `MENU_ITEMS` in `backend/src/seed/data.ts` with an `art` the frontend can draw, then reseed |
+| Extra costs (large, oat milk, extra shot) | The option values in `backend/src/seed/data.ts` |
+| Shop address and hours | The database (`shop_settings`, `opening_hours`, `shop_closures`), and the JSON-LD in `index.html` |
 | How a drink is drawn | `src/components/product-art/` |
 
 ## Conventions

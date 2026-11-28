@@ -1,6 +1,7 @@
 import { motion } from 'motion/react';
 import { useEffect, useRef } from 'react';
-import { getMenuGroup, type MenuGroupId, type MenuItem } from '../../data/menu';
+import { useCatalog } from '../../data/CatalogContext';
+import type { MenuGroupId, MenuItem } from '../../data/menu';
 import { formatPeso } from '../../lib/pricing';
 import { ProductIcon } from '../product-art/ProductIcon';
 
@@ -11,9 +12,11 @@ type MenuRailProps = {
   onStep: (direction: 1 | -1) => void;
 };
 
-const TAB_NAMES: Record<MenuGroupId, string> = { espresso: 'Espresso', slow: 'Slow bar', cold: 'Cold', bakery: 'Bakery' };
+// Short names for the tabs. A group without one falls back to its full name.
+const TAB_NAMES: Record<MenuGroupId, string | undefined> = { espresso: 'Espresso', slow: 'Slow bar', cold: 'Cold', bakery: 'Bakery' };
 
 export function MenuRail({ items, activeIndex, onSelect, onStep }: MenuRailProps) {
+  const catalog = useCatalog();
   const stripRef = useRef<HTMLDivElement>(null);
   const activeGroup = items[activeIndex]?.group;
   const groups = items.reduce<{ id: MenuGroupId; first: number }[]>((found, item, index) => {
@@ -38,10 +41,10 @@ export function MenuRail({ items, activeIndex, onSelect, onStep }: MenuRailProps
             type="button"
             className={group.id === activeGroup ? 'rail-tab on' : 'rail-tab'}
             aria-pressed={group.id === activeGroup}
-            aria-label={getMenuGroup(group.id).name}
+            aria-label={catalog.getGroup(group.id).name}
             onClick={() => onSelect(group.first)}
           >
-            {TAB_NAMES[group.id]}
+            {TAB_NAMES[group.id] ?? catalog.getGroup(group.id).name}
           </button>
         ))}
       </div>

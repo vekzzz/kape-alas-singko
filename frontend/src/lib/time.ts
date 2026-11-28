@@ -1,6 +1,4 @@
 export const MINUTES_PER_DAY = 24 * 60;
-export const OPENING_TIME = 5 * 60;
-export const CLOSING_TIME = 21 * 60;
 
 const MANILA_UTC_OFFSET = 8 * 60;
 
@@ -9,14 +7,19 @@ export function manilaMinutes(date: Date): number {
   return (utcMinutes + MANILA_UTC_OFFSET) % MINUTES_PER_DAY;
 }
 
-export function isOpen(minutes: number): boolean {
-  return minutes >= OPENING_TIME && minutes < CLOSING_TIME;
+/** Whole days since 1970-01-01 on the Manila calendar. */
+export function manilaDay(timestamp: number): number {
+  return Math.floor((timestamp + MANILA_UTC_OFFSET * 60_000) / (MINUTES_PER_DAY * 60_000));
 }
 
-export function minutesUntilOpen(minutes: number): number {
-  if (isOpen(minutes)) return 0;
-  if (minutes < OPENING_TIME) return OPENING_TIME - minutes;
-  return MINUTES_PER_DAY - minutes + OPENING_TIME;
+/** 0 is Sunday, 6 is Saturday, on the Manila calendar. */
+export function manilaWeekday(timestamp: number): number {
+  return (manilaDay(timestamp) + 4) % 7;
+}
+
+/** The Manila calendar date as YYYY-MM-DD. */
+export function manilaDate(timestamp: number): string {
+  return new Date(timestamp + MANILA_UTC_OFFSET * 60_000).toISOString().slice(0, 10);
 }
 
 export function formatTime(minutes: number): string {
@@ -27,17 +30,18 @@ export function formatTime(minutes: number): string {
   return `${hours12}:${mins} ${hours24 < 12 ? 'AM' : 'PM'}`;
 }
 
-export function manilaDay(timestamp: number): number {
-  return Math.floor((timestamp + MANILA_UTC_OFFSET * 60_000) / (MINUTES_PER_DAY * 60_000));
+/** "today", "tomorrow" or a short date such as "Mon, Nov 30", by the Manila calendar. */
+export function dayLabel(timestamp: number, now: number): string {
+  const daysAway = manilaDay(timestamp) - manilaDay(now);
+  if (daysAway === 0) return 'today';
+  if (daysAway === 1) return 'tomorrow';
+  return new Date(timestamp).toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', weekday: 'short', month: 'short', day: 'numeric' });
 }
 
 export function formatPickup(pickupAt: number, now: number): string {
   const time = formatTime(manilaMinutes(new Date(pickupAt)));
-  const daysAway = manilaDay(pickupAt) - manilaDay(now);
-  if (daysAway === 0) return `${time} today`;
-  if (daysAway === 1) return `${time} tomorrow`;
-  const date = new Date(pickupAt).toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', weekday: 'short', month: 'short', day: 'numeric' });
-  return `${time}, ${date}`;
+  const label = dayLabel(pickupAt, now);
+  return label === 'today' || label === 'tomorrow' ? `${time} ${label}` : `${time}, ${label}`;
 }
 
 export function formatDuration(minutes: number): string {

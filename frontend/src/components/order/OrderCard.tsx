@@ -1,4 +1,4 @@
-import { getMenuItem } from '../../data/menu';
+import { useCatalog } from '../../data/CatalogContext';
 import { ORDER_TYPE_LABELS, type PlacedOrder } from '../../lib/orders';
 import type { OrderStatus } from '../../lib/orderStatus';
 import { describeOptions, formatPeso, lineTotal } from '../../lib/pricing';
@@ -8,6 +8,7 @@ import { OrderTracker } from './OrderTracker';
 type OrderCardProps = { order: PlacedOrder; status: OrderStatus | null };
 
 export function OrderCard({ order, status }: OrderCardProps) {
+  const catalog = useCatalog();
   const pickup = formatPickup(order.pickupAt, Date.now());
 
   return (
@@ -27,7 +28,8 @@ export function OrderCard({ order, status }: OrderCardProps) {
 
       <ul className="receipt">
         {order.lines.map((line) => {
-          const item = getMenuItem(line.itemId);
+          const item = catalog.findItem(line.itemId);
+          if (!item) return null;
           const options = describeOptions(item, line.options);
           return (
             <li key={line.id}>

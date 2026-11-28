@@ -1,4 +1,4 @@
-import { getMenuItem, type MenuItem } from '../data/menu';
+import type { Catalog, MenuItem } from '../data/menu';
 
 export type DrinkOptions = {
   size: 'regular' | 'large';
@@ -15,23 +15,15 @@ export type CartLine = {
   quantity: number;
 };
 
-export const EXTRA_COSTS = { large: 30, oat: 40, extraShot: 50 } as const;
-
 export function defaultOptions(item: MenuItem): DrinkOptions {
-  const milkByDefault = item.hasMilk && item.id !== 'cold-brew';
-  return {
-    size: 'regular',
-    temperature: item.icedOnly ? 'iced' : 'hot',
-    milk: milkByDefault ? 'whole' : 'none',
-    extraShot: false,
-  };
+  return { ...item.defaults };
 }
 
 export function unitPrice(item: MenuItem, options: DrinkOptions): number {
   let price = item.price;
-  if (item.hasSizes && options.size === 'large') price += EXTRA_COSTS.large;
-  if (item.hasMilk && options.milk === 'oat') price += EXTRA_COSTS.oat;
-  if (item.hasExtraShot && options.extraShot) price += EXTRA_COSTS.extraShot;
+  if (item.hasSizes && options.size === 'large') price += item.extras.large;
+  if (item.hasMilk && options.milk === 'oat') price += item.extras.oat;
+  if (item.hasExtraShot && options.extraShot) price += item.extras.extraShot;
   return price;
 }
 
@@ -39,8 +31,12 @@ export function lineTotal(item: MenuItem, line: Pick<CartLine, 'options' | 'quan
   return unitPrice(item, line.options) * line.quantity;
 }
 
-export function cartTotal(lines: CartLine[]): number {
-  return lines.reduce((sum, line) => sum + lineTotal(getMenuItem(line.itemId), line), 0);
+/** Lines for items that are no longer on the menu add nothing. */
+export function cartTotal(lines: CartLine[], catalog: Catalog): number {
+  return lines.reduce((sum, line) => {
+    const item = catalog.findItem(line.itemId);
+    return item ? sum + lineTotal(item, line) : sum;
+  }, 0);
 }
 
 export function describeOptions(item: MenuItem, options: DrinkOptions): string {
@@ -53,5 +49,5 @@ export function describeOptions(item: MenuItem, options: DrinkOptions): string {
 }
 
 export function formatPeso(amount: number): string {
-  return `₱${amount}`;
+  return Number.isInteger(amount) ? `₱${amount}` : `₱${amount.toFixed(2)}`;
 }

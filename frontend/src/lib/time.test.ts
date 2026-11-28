@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDuration, formatPickup, formatTime, isOpen, manilaMinutes, minutesUntilOpen } from './time';
+import { dayLabel, formatDuration, formatPickup, formatTime, manilaDate, manilaMinutes, manilaWeekday } from './time';
 
 describe('manilaMinutes', () => {
   it('converts UTC to Manila time', () => {
@@ -8,20 +8,13 @@ describe('manilaMinutes', () => {
   });
 });
 
-describe('isOpen', () => {
-  it('is open from 5:00 AM until just before 9:00 PM', () => {
-    expect(isOpen(299)).toBe(false);
-    expect(isOpen(300)).toBe(true);
-    expect(isOpen(1259)).toBe(true);
-    expect(isOpen(1260)).toBe(false);
-  });
-});
-
-describe('minutesUntilOpen', () => {
-  it('counts down to the first pour', () => {
-    expect(minutesUntilOpen(4 * 60)).toBe(60);
-    expect(minutesUntilOpen(22 * 60)).toBe(7 * 60);
-    expect(minutesUntilOpen(600)).toBe(0);
+describe('manilaDate and manilaWeekday', () => {
+  it('use the Manila calendar, not the UTC one', () => {
+    // 17:00 UTC on Saturday the 28th is already 1 AM Sunday the 29th in Manila.
+    const instant = Date.parse('2026-11-28T17:00:00Z');
+    expect(manilaDate(instant)).toBe('2026-11-29');
+    expect(manilaWeekday(instant)).toBe(0);
+    expect(manilaWeekday(Date.parse('2026-11-28T01:00:00Z'))).toBe(6);
   });
 });
 
@@ -51,5 +44,18 @@ describe('formatPickup', () => {
 
   it('turns a saved "tomorrow" into "today" once the day comes', () => {
     expect(formatPickup(Date.parse('2026-11-18T21:00:00Z'), Date.parse('2026-11-18T20:00:00Z'))).toBe('5:00 AM today');
+  });
+
+  it('names the date when it is further away', () => {
+    expect(formatPickup(Date.parse('2026-11-22T01:00:00Z'), now)).toMatch(/^9:00 AM, .*22/);
+  });
+});
+
+describe('dayLabel', () => {
+  it('is today, tomorrow or a date', () => {
+    const now = Date.parse('2026-11-18T03:00:00Z');
+    expect(dayLabel(Date.parse('2026-11-18T10:00:00Z'), now)).toBe('today');
+    expect(dayLabel(Date.parse('2026-11-19T01:00:00Z'), now)).toBe('tomorrow');
+    expect(dayLabel(Date.parse('2026-11-23T01:00:00Z'), now)).toMatch(/Nov/);
   });
 });

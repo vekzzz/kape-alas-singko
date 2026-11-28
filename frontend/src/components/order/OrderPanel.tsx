@@ -1,10 +1,9 @@
 import { AnimatePresence } from 'motion/react';
 import { useEffect, useState } from 'react';
 import { useCart } from '../../cart/useCart';
-import { getMenuItem } from '../../data/menu';
+import { useCatalog } from '../../data/CatalogContext';
 import type { OrderStatuses } from '../../hooks/useOrderStatus';
 import { newOrderNumber, sendOrder, type OrderType, type PlacedOrder } from '../../lib/orders';
-import { pickupTimestamp } from '../../lib/pickupSlots';
 import { formatPeso, type CartLine } from '../../lib/pricing';
 import { CartLineItem } from './CartLineItem';
 import { MyOrders } from './MyOrders';
@@ -25,6 +24,7 @@ type OrderPanelProps = {
 };
 
 export function OrderPanel({ orderType, startOnOrders, orders, statuses, onPlaced, onClose, onEditLine }: OrderPanelProps) {
+  const catalog = useCatalog();
   const { lines, total, dispatch } = useCart();
   const [step, setStep] = useState<'review' | 'pickup'>('review');
   const [showingOrders, setShowingOrders] = useState(startOnOrders);
@@ -49,7 +49,7 @@ export function OrderPanel({ orderType, startOnOrders, orders, statuses, onPlace
 
   const undoBar = removed && (
     <div className="undo" role="status">
-      <span>Took out the {getMenuItem(removed.line.itemId).name}.</span>
+      <span>Took out the {catalog.findItem(removed.line.itemId)?.name ?? 'item'}.</span>
       <button type="button" className="text-btn" onClick={undoRemove}>
         Undo
       </button>
@@ -72,13 +72,13 @@ export function OrderPanel({ orderType, startOnOrders, orders, statuses, onPlace
       orderType,
       name,
       phone,
-      pickupAt: pickupTimestamp(slot, now),
+      pickupAt: slot.pickupAt,
       placedAt: now.getTime(),
       lines,
       total,
       sent: false,
     };
-    const result = await sendOrder(order);
+    const result = await sendOrder(order, catalog);
     onPlaced({ ...order, sent: result.sent, number: (result.sent && result.number) || order.number });
     setShowingOrders(true);
     dispatch({ type: 'clear' });

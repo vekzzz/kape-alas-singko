@@ -1,29 +1,34 @@
 import { motion } from 'motion/react';
 import { useEffect } from 'react';
-import { getMenuItem } from '../../data/menu';
+import { useShop } from '../../api/hooks';
+import { useOptionalCatalog } from '../../data/CatalogContext';
 import { ORDER_TYPE_LABELS, type OrderType } from '../../lib/orders';
-import { defaultOptions, type DrinkOptions } from '../../lib/pricing';
-import { MAPS_URL, SHOP_ADDRESS, SHOP_HOURS } from '../../lib/shop';
+import { defaultOptions } from '../../lib/pricing';
+import { describeHours, mapsUrl } from '../../lib/shop';
 import { ProductArt } from '../product-art/ProductArt';
 import { OpenStatus } from '../stage/OpenStatus';
-import { stageColorsFor } from '../stage/stageColors';
 
-const LATTE = getMenuItem('latte');
+// The brand colours, used until (and unless) the menu says otherwise.
+const BRAND_COLORS = { background: '#ff99d3', ink: '#3d0012' };
 
-type Choice = { type: OrderType; options: DrinkOptions };
-
-const CHOICES: Choice[] = [
-  { type: 'dine-in', options: { ...defaultOptions(LATTE), temperature: 'hot' } },
-  { type: 'take-out', options: { ...defaultOptions(LATTE), temperature: 'iced' } },
+const CHOICES: { type: OrderType; temperature: 'hot' | 'iced' }[] = [
+  { type: 'dine-in', temperature: 'hot' },
+  { type: 'take-out', temperature: 'iced' },
 ];
 
 type WelcomeScreenProps = {
+  /** Current time in milliseconds. */
   now: number;
   onChoose: (orderType: OrderType) => void;
 };
 
 export function WelcomeScreen({ now, onChoose }: WelcomeScreenProps) {
-  useBrandColors();
+  // The welcome screen shows straight away. The menu and shop details fill in when the API answers.
+  const catalog = useOptionalCatalog();
+  const { data: shop } = useShop();
+  const latte = catalog?.findItem('latte');
+  const brand = catalog?.findItem('alas-singko');
+  useBrandColors(brand?.stageBackground ?? BRAND_COLORS.background, brand?.stageInk ?? BRAND_COLORS.ink);
 
   return (
     <main className="welcome">
@@ -62,7 +67,9 @@ export function WelcomeScreen({ now, onChoose }: WelcomeScreenProps) {
             >
               <span className="welcome-disc" aria-hidden="true">
                 <span className="welcome-cup">
-                  <ProductArt item={LATTE} options={choice.options} steaming={choice.options.temperature === 'hot'} />
+                  {latte && (
+                    <ProductArt item={latte} options={{ ...defaultOptions(latte), temperature: choice.temperature }} steaming={choice.temperature === 'hot'} />
+                  )}
                 </span>
               </span>
               <span className="welcome-label">{ORDER_TYPE_LABELS[choice.type]}</span>
@@ -72,21 +79,26 @@ export function WelcomeScreen({ now, onChoose }: WelcomeScreenProps) {
       </section>
 
       <p className="welcome-foot soft small">
-        <a href={MAPS_URL} target="_blank" rel="noopener noreferrer">
-          {SHOP_ADDRESS}
-        </a>
-        . {SHOP_HOURS}.
+        {shop ? (
+          <>
+            <a href={mapsUrl(shop)} target="_blank" rel="noopener noreferrer">
+              {shop.address}
+            </a>
+            . {describeHours(shop.openingHours)}.
+          </>
+        ) : (
+          'Finding our hours…'
+        )}
       </p>
     </main>
   );
 }
 
-function useBrandColors() {
+function useBrandColors(background: string, ink: string) {
   useEffect(() => {
-    const { background, ink } = stageColorsFor('alas-singko');
     const root = document.documentElement.style;
     root.setProperty('--bg', background);
     root.setProperty('--ink', ink);
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', background);
-  }, []);
+  }, [background, ink]);
 }

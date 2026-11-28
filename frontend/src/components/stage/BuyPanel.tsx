@@ -1,8 +1,10 @@
 import { AnimatePresence, motion, useIsPresent } from 'motion/react';
+import { useShop } from '../../api/hooks';
 import { isCustomizable, type MenuItem } from '../../data/menu';
 import { useQuickAdd } from '../../hooks/useQuickAdd';
 import { defaultOptions, describeOptions, formatPeso } from '../../lib/pricing';
-import { OPENING_TIME, formatTime } from '../../lib/time';
+import { opensAtOn } from '../../lib/shop';
+import { formatTime } from '../../lib/time';
 import { AnimatedPrice } from './AnimatedPrice';
 import { EASE_OUT, panelVariants } from './motionPresets';
 
@@ -28,6 +30,8 @@ export function BuyPanel({ item, direction, onCustomize }: BuyPanelProps) {
 function BuyDetails({ item, direction, onCustomize }: BuyPanelProps) {
   const isPresent = useIsPresent();
   const { add, justAdded } = useQuickAdd(item);
+  const { data: shop } = useShop();
+  const opensTomorrow = shop ? opensAtOn(shop, Date.now() + 24 * 60 * 60 * 1000) : null;
   const defaults = isCustomizable(item) ? describeOptions(item, defaultOptions(item)) : '';
 
   return (
@@ -48,7 +52,7 @@ function BuyDetails({ item, direction, onCustomize }: BuyPanelProps) {
       {item.note && <p className="strong">{item.note}</p>}
 
       {item.soldOut ? (
-        <p className="strong">Sorry, we've sold out of this today. It's back tomorrow from {formatTime(OPENING_TIME)}.</p>
+        <p className="strong">Sorry, we've sold out of this today. It's back tomorrow{opensTomorrow !== null && ` from ${formatTime(opensTomorrow)}`}.</p>
       ) : (
         <>
           <div className="stage-actions">

@@ -3,6 +3,7 @@ import { ORDER_TYPE_LABELS, type OrderType } from '../../lib/orders';
 import { OpenStatus } from './OpenStatus';
 
 type StageHeaderProps = {
+  /** Current time in milliseconds. */
   now: number;
   orderType: OrderType;
   onChangeOrderType: () => void;

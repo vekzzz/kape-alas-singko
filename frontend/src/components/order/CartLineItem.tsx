@@ -1,6 +1,6 @@
 import { motion } from 'motion/react';
 import { useCart } from '../../cart/useCart';
-import { getMenuItem } from '../../data/menu';
+import { useCatalog } from '../../data/CatalogContext';
 import { describeOptions, formatPeso, lineTotal, type CartLine } from '../../lib/pricing';
 import { ProductIcon } from '../product-art/ProductIcon';
 import { QuantityStepper } from '../ui/QuantityStepper';
@@ -13,7 +13,9 @@ type CartLineItemProps = {
 
 export function CartLineItem({ line, onEdit, onRemove }: CartLineItemProps) {
   const { dispatch } = useCart();
-  const item = getMenuItem(line.itemId);
+  const catalog = useCatalog();
+  const item = catalog.findItem(line.itemId);
+  if (!item) return null;
   const details = [describeOptions(item, line.options), line.note].filter(Boolean).join(' · ');
 
   return (

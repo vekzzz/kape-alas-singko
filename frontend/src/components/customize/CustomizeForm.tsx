@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { useCart } from '../../cart/useCart';
 import { isCustomizable, type MenuItem } from '../../data/menu';
 import { flyToCart } from '../../lib/flyToCart';
-import { EXTRA_COSTS, defaultOptions, formatPeso, unitPrice, type CartLine, type DrinkOptions } from '../../lib/pricing';
+import { defaultOptions, formatPeso, unitPrice, type CartLine, type DrinkOptions } from '../../lib/pricing';
 import { ProductArt } from '../product-art/ProductArt';
 import { QuantityStepper } from '../ui/QuantityStepper';
 import { ChoiceGroup } from './ChoiceGroup';
@@ -52,7 +52,7 @@ export function CustomizeForm({ item, editing, onDone }: CustomizeFormProps) {
           onChange={(size) => updateOptions({ size })}
           choices={[
             { value: 'regular', label: 'Regular' },
-            { value: 'large', label: `Large +${formatPeso(EXTRA_COSTS.large)}` },
+            { value: 'large', label: `Large +${formatPeso(item.extras.large)}` },
           ]}
         />
       )}
@@ -78,7 +78,7 @@ export function CustomizeForm({ item, editing, onDone }: CustomizeFormProps) {
           onChange={(milk) => updateOptions({ milk })}
           choices={[
             { value: 'whole', label: 'Whole' },
-            { value: 'oat', label: `Oat +${formatPeso(EXTRA_COSTS.oat)}` },
+            { value: 'oat', label: `Oat +${formatPeso(item.extras.oat)}` },
             { value: 'none', label: 'None' },
           ]}
         />
@@ -89,7 +89,7 @@ export function CustomizeForm({ item, editing, onDone }: CustomizeFormProps) {
           <legend>Want it stronger?</legend>
           <label className="pill-option">
             <input type="checkbox" checked={options.extraShot} onChange={(event) => updateOptions({ extraShot: event.target.checked })} />
-            <span>Extra shot +{formatPeso(EXTRA_COSTS.extraShot)}</span>
+            <span>Extra shot +{formatPeso(item.extras.extraShot)}</span>
           </label>
         </fieldset>
       )}

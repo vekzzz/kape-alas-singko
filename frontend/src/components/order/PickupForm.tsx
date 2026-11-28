@@ -1,9 +1,11 @@
 import { useMemo, useRef, useState, type FormEvent } from 'react';
-import { useManilaMinutes } from '../../hooks/useManilaMinutes';
+import { usePickupSlotsQuery, useShop } from '../../api/hooks';
+import { useNow } from '../../hooks/useNow';
 import { normalizePhone, type OrderType } from '../../lib/orders';
-import { pickupSlots, type PickupSlot } from '../../lib/pickupSlots';
+import { toPickupSlots, type PickupSlot } from '../../lib/pickupSlots';
 import { formatPeso } from '../../lib/pricing';
-import { OPENING_TIME, formatTime, isOpen } from '../../lib/time';
+import { openStatus } from '../../lib/shop';
+import { formatTime } from '../../lib/time';
 
 const QUICK_SLOTS = 4;
 
@@ -17,8 +19,10 @@ type PickupFormProps = {
 };
 
 export function PickupForm({ orderType, total, onBack, onPlace }: PickupFormProps) {
-  const now = useManilaMinutes();
-  const slots = useMemo(() => pickupSlots(now), [now]);
+  const now = useNow();
+  const { data: shop } = useShop();
+  const slotsQuery = usePickupSlotsQuery();
+  const slots = useMemo(() => (slotsQuery.data ? toPickupSlots(slotsQuery.data, now) : []), [slotsQuery.data, now]);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [slotValue, setSlotValue] = useState('');
@@ -32,11 +36,11 @@ export function PickupForm({ orderType, total, onBack, onPlace }: PickupFormProp
   const chosenSlot = slots.find((slot) => slot.value === slotValue) ?? slots[0];
   const quickSlots = slots.slice(0, QUICK_SLOTS);
   const laterSlots = slots.slice(QUICK_SLOTS);
-  const laterChosen = showLater && laterSlots.includes(chosenSlot);
+  const laterChosen = showLater && chosenSlot !== undefined && laterSlots.includes(chosenSlot);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (sending) return;
+    if (sending || !chosenSlot) return;
 
     const missingName = !name.trim();
     const normalizedPhone = phone.trim() ? normalizePhone(phone) : '';
@@ -67,8 +71,8 @@ export function PickupForm({ orderType, total, onBack, onPlace }: PickupFormProp
       <p className="soft">
         {orderType === 'dine-in' ? "You're dining in. We'll call your name when it's on the counter." : "It's to go. We'll pack it up and call your name at the counter."}
       </p>
-      {!isOpen(now) && (
-        <p className="soft">We're closed right now, so the earliest times are for when we open at {formatTime(OPENING_TIME)}.</p>
+      {shop && chosenSlot && !openStatus(shop, now).open && (
+        <p className="soft">We're closed right now, so the earliest times are for when we open at {formatTime(slots[0]!.minutes)}.</p>
       )}
 
       <label className="field">
@@ -116,6 +120,17 @@ export function PickupForm({ orderType, total, onBack, onPlace }: PickupFormProp
         )}
       </label>
 
+      {!chosenSlot && (
+        <p className="soft" role="status">
+          {slotsQuery.isError
+            ? "We couldn't load pickup times. Check your connection and try again in a moment."
+            : slotsQuery.isPending
+              ? 'Finding pickup times…'
+              : "We're not taking orders right now. Please check back soon, or order at the counter."}
+        </p>
+      )}
+
+      {chosenSlot && (
       <fieldset className="choice">
         <legend>
           When should it be ready? ({chosenSlot.day})
@@ -166,6 +181,7 @@ export function PickupForm({ orderType, total, onBack, onPlace }: PickupFormProp
           </label>
         )}
       </fieldset>
+      )}
 
       <div className="cart-sum">
         <span>Payment at the counter</span>
@@ -178,7 +194,7 @@ export function PickupForm({ orderType, total, onBack, onPlace }: PickupFormProp
         </p>
       )}
 
-      <button type="submit" className="btn" disabled={sending}>
+      <button type="submit" className="btn" disabled={sending || !chosenSlot}>
         {sending ? 'Sending it to the bar…' : sendError ? 'Try again' : 'Prepare my order'}
       </button>
       <button type="button" className="text-btn" onClick={onBack} disabled={sending}>

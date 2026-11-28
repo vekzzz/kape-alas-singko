@@ -44,8 +44,8 @@ describe('cleanOrder', () => {
     expect(cleanOrder(older)?.orderType).toBe('take-out');
   });
 
-  it('drops lines for items no longer on the menu', () => {
-    const saved = { ...order('A5-X', 0), lines: [{ id: 'a', itemId: 'latte' }, { id: 'b', itemId: 'gone' }] };
+  it('drops lines that have no item', () => {
+    const saved = { ...order('A5-X', 0), lines: [{ id: 'a', itemId: 'latte' }, { id: 'b' }, null] };
     expect(cleanOrder(saved)?.lines.map((line) => line.itemId)).toEqual(['latte']);
   });
 });

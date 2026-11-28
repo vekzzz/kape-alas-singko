@@ -1,9 +1,12 @@
 import { AnimatePresence, motion } from 'motion/react';
-import { getMenuGroup, type MenuItem } from '../../data/menu';
+import { useCatalog } from '../../data/CatalogContext';
+import type { MenuItem } from '../../data/menu';
 import { EASE_OUT } from './motionPresets';
 import { splitName } from './splitName';
 
 export function ItemTitle({ item }: { item: MenuItem }) {
+  const catalog = useCatalog();
+
   return (
     <div className="stage-name" aria-live="polite">
       <AnimatePresence mode="wait">
@@ -22,7 +25,7 @@ export function ItemTitle({ item }: { item: MenuItem }) {
           ))}
         </motion.h2>
       </AnimatePresence>
-      <p className="stage-group">{getMenuGroup(item.group).name}</p>
+      <p className="stage-group">{catalog.getGroup(item.group).name}</p>
     </div>
   );
 }

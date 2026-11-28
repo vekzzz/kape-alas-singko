@@ -7,14 +7,10 @@ export const LAYER_SPRING = { type: 'spring', stiffness: 140, damping: 20 } as c
 export type Vessel = 'demitasse' | 'cup' | 'small-cup' | 'mug' | 'glass' | 'press' | 'pour-over' | 'pastry';
 
 export function pickVessel(item: MenuItem, iced: boolean): Vessel {
-  if (item.group === 'bakery') return 'pastry';
-  if (iced || item.id === 'spanish-latte') return 'glass';
-  if (item.id === 'barako-press') return 'press';
-  if (item.id === 'benguet-pour-over') return 'pour-over';
-  if (item.id === 'alas-singko') return 'demitasse';
-  if (item.id === 'batch-brew') return 'mug';
-  if (item.id === 'flat-white') return 'small-cup';
-  return 'cup';
+  if (item.art === 'pastry') return 'pastry';
+  // An iced drink is always poured into a glass, whatever vessel it uses when hot.
+  if (iced) return 'glass';
+  return item.art;
 }
 
 export function mixColors(from: string, to: string, amount: number): string {

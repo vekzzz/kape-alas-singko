@@ -1,37 +1,23 @@
 import { describe, expect, it } from 'vitest';
-import { pickupSlots, pickupTimestamp } from './pickupSlots';
+import { toPickupSlots } from './pickupSlots';
 
-describe('pickupSlots', () => {
-  it('starts at least ten minutes from now, on a quarter hour', () => {
-    expect(pickupSlots(9 * 60 + 2)[0]).toMatchObject({ day: 'today', minutes: 9 * 60 + 15 });
-    expect(pickupSlots(9 * 60 + 6)[0]?.minutes).toBe(9 * 60 + 30);
+const now = Date.parse('2026-11-28T01:00:00Z'); // 9:00 AM Saturday in Manila
+
+describe('toPickupSlots', () => {
+  it('labels each slot with its Manila time and day', () => {
+    const slots = toPickupSlots({ date: '2026-11-28', slots: [{ pickupAt: '2026-11-28T01:15:00.000Z' }, { pickupAt: '2026-11-28T01:30:00.000Z' }] }, now);
+    expect(slots).toHaveLength(2);
+    expect(slots[0]).toEqual({ value: '2026-11-28T01:15:00.000Z', pickupAt: Date.parse('2026-11-28T01:15:00Z'), minutes: 9 * 60 + 15, day: 'today' });
+    expect(slots[1]?.minutes).toBe(9 * 60 + 30);
   });
 
-  it('ends at 8:45 PM', () => {
-    const slots = pickupSlots(600);
-    expect(slots.at(-1)?.minutes).toBe(20 * 60 + 45);
+  it('calls the next calendar day tomorrow, even from late in the evening', () => {
+    const lateNow = Date.parse('2026-11-28T12:45:00Z'); // 8:45 PM
+    const [slot] = toPickupSlots({ date: '2026-11-29', slots: [{ pickupAt: '2026-11-28T21:00:00.000Z' }] }, lateNow);
+    expect(slot).toMatchObject({ day: 'tomorrow', minutes: 5 * 60 });
   });
 
-  it('offers opening time before the shop opens', () => {
-    expect(pickupSlots(3 * 60)[0]).toMatchObject({ day: 'today', minutes: 300 });
-    expect(pickupSlots(4 * 60 + 55)[0]?.minutes).toBe(315);
-  });
-
-  it('rolls over to tomorrow when no slot is left today', () => {
-    expect(pickupSlots(20 * 60 + 40)[0]).toMatchObject({ day: 'tomorrow', minutes: 300 });
-    expect(pickupSlots(23 * 60)[0]).toMatchObject({ day: 'tomorrow', minutes: 300 });
-    expect(pickupSlots(20 * 60 + 35)[0]).toMatchObject({ day: 'today', minutes: 20 * 60 + 45 });
-  });
-});
-
-describe('pickupTimestamp', () => {
-  const now = new Date('2026-11-18T12:50:30Z');
-
-  it('lands on the slot time today', () => {
-    expect(new Date(pickupTimestamp({ day: 'today', minutes: 21 * 60 }, now)).toISOString()).toBe('2026-11-18T13:00:00.000Z');
-  });
-
-  it('lands on the slot time tomorrow', () => {
-    expect(new Date(pickupTimestamp({ day: 'tomorrow', minutes: 5 * 60 }, now)).toISOString()).toBe('2026-11-18T21:00:00.000Z');
+  it('is empty when the server offers nothing', () => {
+    expect(toPickupSlots({ date: null, slots: [] }, now)).toEqual([]);
   });
 });

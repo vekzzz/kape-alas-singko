@@ -1,4 +1,4 @@
-import { getMenuItem } from '../data/menu';
+import type { Catalog } from '../data/menu';
 import { describeOptions, lineTotal, type CartLine } from './pricing';
 
 export type OrderType = 'dine-in' | 'take-out';
@@ -33,7 +33,7 @@ export function normalizePhone(input: string): string | null {
   return null;
 }
 
-export function orderPayload(order: PlacedOrder) {
+export function orderPayload(order: PlacedOrder, catalog: Catalog) {
   return {
     number: order.number,
     orderType: order.orderType,
@@ -43,7 +43,7 @@ export function orderPayload(order: PlacedOrder) {
     placedAt: new Date(order.placedAt).toISOString(),
     total: order.total,
     items: order.lines.map((line) => {
-      const item = getMenuItem(line.itemId);
+      const item = catalog.getItem(line.itemId);
       return {
         item: item.name,
         options: describeOptions(item, line.options),
@@ -57,13 +57,13 @@ export function orderPayload(order: PlacedOrder) {
 
 export type SendResult = { sent: true; number?: string } | { sent: false };
 
-export async function sendOrder(order: PlacedOrder, endpoint: string | undefined = import.meta.env.VITE_ORDER_ENDPOINT): Promise<SendResult> {
+export async function sendOrder(order: PlacedOrder, catalog: Catalog, endpoint: string | undefined = import.meta.env.VITE_ORDER_ENDPOINT): Promise<SendResult> {
   if (!endpoint) return { sent: false };
 
   const response = await fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(orderPayload(order)),
+    body: JSON.stringify(orderPayload(order, catalog)),
     signal: AbortSignal.timeout(SEND_TIMEOUT_MS),
   });
   if (!response.ok) throw new Error(`Order endpoint answered ${response.status}`);

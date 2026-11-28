@@ -9,9 +9,8 @@ describe('parseCartLines', () => {
     expect(parseCartLines([line])).toEqual([line]);
   });
 
-  it('drops items that are gone or sold out', () => {
-    expect(parseCartLines([{ ...line, itemId: 'no-such-drink' }])).toEqual([]);
-    expect(parseCartLines([{ ...line, itemId: 'ube-pandesal' }])).toEqual([]);
+  it('leaves the menu check for when the menu has loaded', () => {
+    expect(parseCartLines([{ ...line, itemId: 'no-such-drink' }])).toHaveLength(1);
   });
 
   it('drops malformed lines', () => {

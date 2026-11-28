@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { getMenuItem } from '../data/menu';
+import { catalog } from '../test/menuFixture';
 import { cartTotal, defaultOptions, describeOptions, unitPrice } from './pricing';
 
-const latte = getMenuItem('latte');
-const pandesal = getMenuItem('pandesal');
+const latte = catalog.getItem('latte');
+const pandesal = catalog.getItem('pandesal');
 
 describe('unitPrice', () => {
   it('adds the cost of each extra', () => {
@@ -18,11 +18,19 @@ describe('unitPrice', () => {
 
 describe('cartTotal', () => {
   it('adds up every line', () => {
-    const total = cartTotal([
-      { id: 'a', itemId: 'latte', options: defaultOptions(latte), note: '', quantity: 2 },
-      { id: 'b', itemId: 'pandesal', options: defaultOptions(pandesal), note: '', quantity: 1 },
-    ]);
+    const total = cartTotal(
+      [
+        { id: 'a', itemId: 'latte', options: defaultOptions(latte), note: '', quantity: 2 },
+        { id: 'b', itemId: 'pandesal', options: defaultOptions(pandesal), note: '', quantity: 1 },
+      ],
+      catalog,
+    );
     expect(total).toBe(430);
+  });
+
+  it('adds nothing for an item that is no longer on the menu', () => {
+    const gone = { id: 'x', itemId: 'gone', options: defaultOptions(latte), note: '', quantity: 3 };
+    expect(cartTotal([gone], catalog)).toBe(0);
   });
 });
 

@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { getMenuItem } from '../data/menu';
 import { defaultOptions } from '../lib/pricing';
+import { catalog } from '../test/menuFixture';
 import { cartReducer } from './cartReducer';
 
-const latteOptions = defaultOptions(getMenuItem('latte'));
+const latteOptions = defaultOptions(catalog.getItem('latte'));
 const addLatte = { type: 'add', itemId: 'latte', options: latteOptions, note: '', quantity: 1 } as const;
 
 describe('cartReducer', () => {

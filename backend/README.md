@@ -4,9 +4,20 @@ Express 5 + TypeScript + Postgres (Drizzle ORM) API for Kapé Alas-Singko. The p
 
 ## Status
 
-Built in slices. **Slice 1 (foundation) is done:** the full database schema, migrations, the menu seed, the test harness and the app shell (`/health`, error shape, CORS, helmet, request logs).
+Built in slices. **Slices 1 and 2 are done:** the database schema, migrations, seed and test harness, and the three public read endpoints below, which the frontend now uses for its menu, hours and pickup times.
 
-The order, menu, shop and staff endpoints arrive in slices 2 to 4, so for now **the API does not receive orders**. The old `POST /orders` and `GET /orders?number=` routes, and the old single `orders` table, are gone. The frontend still calls them until slice 3 switches it to the new API.
+Orders and staff arrive in slices 3 and 4, so for now **the API does not receive orders**. The old `POST /orders` and `GET /orders?number=` routes, and the old single `orders` table, are gone. The frontend still posts orders to the old webhook until slice 3 switches it to the new API.
+
+## Endpoints
+
+| Method | Path | What |
+| --- | --- | --- |
+| GET | `/health` | Liveness check for Render. Does not touch the database. |
+| GET | `/api/v1/menu` | Groups, option groups with prices, and active items with their options and defaults. Has an `ETag`, so `If-None-Match` gets a `304`. |
+| GET | `/api/v1/shop` | Name, address, time zone, opening hours, upcoming closures, `acceptingOrders`, slot length and lead time. |
+| GET | `/api/v1/pickup-slots` | The times a customer can pick up right now: the rest of today, or the next open day. Empty while orders are paused. Never cached. |
+
+Prices are integer centavos. The reply shapes are zod schemas in `packages/contract/src/read.ts`. The slot rules are a pure function in `src/domain/pickupSlots.ts`, worked out in the shop's time zone from the hours, closures and lead time.
 
 ## Setup
 
