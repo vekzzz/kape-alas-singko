@@ -20,6 +20,11 @@ const envSchema = z.object({
         .filter(Boolean),
     ),
   LOG_LEVEL: z.enum(LOG_LEVELS).default('info'),
+  /** "true" when a proxy (Render) sits in front, so the rate limit sees the real visitor address. */
+  TRUST_PROXY: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((value) => value === 'true'),
 });
 
 export type Env = z.infer<typeof envSchema>;
