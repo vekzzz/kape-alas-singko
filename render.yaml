@@ -1,0 +1,67 @@
+# Render blueprint: the API and the static site. The database is Neon (neon.com), not Render:
+# a free Render Postgres is deleted after 30 days, a free Neon one is not. See "Deploying" in README.md.
+#
+# Free-plan notes:
+# - Pre-deploy commands are paid-only, so migrations run at the start of startCommand instead (they are safe to repeat).
+# - The API sleeps after ~15 minutes idle; the first request after that takes about 30 seconds.
+
+services:
+  - type: web
+    name: kape-api
+    runtime: node
+    plan: free
+    # Build from the repo root: the API bundles the shared packages/contract workspace.
+    buildCommand: npm ci --include=dev && npm run build -w backend
+    startCommand: npm run start:prod -w backend
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      # Neon's pooled connection string (the host has "-pooler" in it).
+      - key: DATABASE_URL
+        sync: false
+      # Neon's direct connection string (no "-pooler"). Used for migrations. Optional but advised by Neon.
+      - key: MIGRATION_DATABASE_URL
+        sync: false
+      - key: DATABASE_SSL
+        value: "true"
+      # The static site's address, for CORS, for example https://kape-frontend.onrender.com
+      - key: FRONTEND_ORIGIN
+        sync: false
+      # Render puts a proxy in front, so count real visitors in the rate limits.
+      - key: TRUST_PROXY
+        value: "true"
+      - key: LOG_LEVEL
+        value: info
+
+  - type: web
+    name: kape-frontend
+    runtime: static
+    buildCommand: npm ci --include=dev && npm run build -w frontend
+    staticPublishPath: frontend/dist
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      # The API's address, for example https://kape-api.onrender.com. Baked in at build time:
+      # change it, and the site must be built again. The build stops if it is missing.
+      - key: VITE_API_URL
+        sync: false
+    routes:
+      # The bar's order board is a second page of the same site.
+      - type: rewrite
+        source: /staff
+        destination: /staff.html
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      # The board is for the bar, not for search engines.
+      - path: /staff
+        name: X-Robots-Tag
+        value: noindex, nofollow
+      - path: /staff.html
+        name: X-Robots-Tag
+        value: noindex, nofollow

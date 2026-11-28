@@ -1,0 +1,73 @@
+import { AnimatePresence, motion, useIsPresent } from 'motion/react';
+import { useShop } from '../../api/hooks';
+import { isCustomizable, type MenuItem } from '../../data/menu';
+import { useQuickAdd } from '../../hooks/useQuickAdd';
+import { defaultOptions, describeOptions, formatPeso } from '../../lib/pricing';
+import { opensAtOn } from '../../lib/shop';
+import { formatTime } from '../../lib/time';
+import { AnimatedPrice } from './AnimatedPrice';
+import { EASE_OUT, panelVariants } from './motionPresets';
+
+type BuyPanelProps = {
+  item: MenuItem;
+  direction: number;
+  onCustomize: (item: MenuItem) => void;
+};
+
+export function BuyPanel({ item, direction, onCustomize }: BuyPanelProps) {
+  return (
+    <div className="stage-buy glass">
+      <AnimatePresence custom={direction} initial={false} mode="wait">
+        <BuyDetails key={item.id} item={item} direction={direction} onCustomize={onCustomize} />
+      </AnimatePresence>
+      <p className="pickup">
+        Add what you like, then pay at the counter. We'll call your name when it's ready.
+      </p>
+    </div>
+  );
+}
+
+function BuyDetails({ item, direction, onCustomize }: BuyPanelProps) {
+  const isPresent = useIsPresent();
+  const { add, justAdded } = useQuickAdd(item);
+  const { data: shop } = useShop();
+  const opensTomorrow = shop ? opensAtOn(shop, Date.now() + 24 * 60 * 60 * 1000) : null;
+  const defaults = isCustomizable(item) ? describeOptions(item, defaultOptions(item)) : '';
+
+  return (
+    <motion.div
+      className="stage-buy-in"
+      inert={!isPresent}
+      custom={direction}
+      variants={panelVariants}
+      initial="enter"
+      animate="centre"
+      exit="exit"
+      transition={{ duration: 0.3, ease: EASE_OUT }}
+    >
+      <p className="stage-price num" aria-label={formatPeso(item.price)}>
+        <AnimatedPrice value={item.price} />
+      </p>
+      <p>{item.description}</p>
+      {item.note && <p className="strong">{item.note}</p>}
+
+      {item.soldOut ? (
+        <p className="strong">Sorry, we've sold out of this today. It's back tomorrow{opensTomorrow !== null && ` from ${formatTime(opensTomorrow)}`}.</p>
+      ) : (
+        <>
+          <div className="stage-actions">
+            <button type="button" className="btn quick-add" onClick={(event) => add(event.currentTarget)}>
+              {justAdded ? 'Added! Want another?' : 'Add to my order'}
+            </button>
+            {isCustomizable(item) && (
+              <button type="button" className="text-btn" onClick={() => onCustomize(item)}>
+                Make it your way
+              </button>
+            )}
+          </div>
+          {defaults && <p className="soft small defaults">We make it {defaults.toLowerCase()} unless you say otherwise.</p>}
+        </>
+      )}
+    </motion.div>
+  );
+}
