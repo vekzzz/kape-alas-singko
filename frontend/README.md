@@ -11,27 +11,19 @@ Built with React 19, TypeScript, Vite and Motion. The menu, prices, opening hour
 - **Server data** (TanStack Query, `src/api/`): `GET /api/v1/menu`, `/shop` and `/pickup-slots`, checked against the zod schemas in `@kape/contract`. The menu and shop are looked at again every minute and when the tab comes back. They are also saved to `localStorage` for 24 hours, so a returning customer sees the last menu straight away while the new one loads. Pickup times are never saved.
 - **The first visit** can be slow, because the free API host sleeps when idle. The welcome screen shows at once, with a placeholder where the hours go. The menu stage says it is warming up, or offers a retry if the API cannot be reached.
 - **Browser state** (zustand with `persist`, `src/cart/`): the cart, the orders placed in this browser, and dine in or take out for the session. Storage keys are versioned.
-- **Prices** arrive as integer centavos and are shown in pesos. The server will recompute them when orders move to the new API.
+- **Prices** arrive as integer centavos and are shown in pesos. The server recomputes every price when an order is placed.
 
-## Receiving orders
+## Placing and tracking orders
 
-Placed orders are POSTed as JSON to the webhook in `VITE_ORDER_ENDPOINT` (copy `.env.example` to `.env`). The body is sent as `text/plain` so a Google Apps Script web app can take it without a CORS preflight; any webhook that reads the raw body works. The payload includes `orderType` (`dine-in` or `take-out`). If the endpoint replies with JSON containing `"number"`, that order number is shown to the customer instead of the one made in the browser. If the request fails, the customer sees an error and keeps their cart.
+Checkout sends the cart to `POST /api/v1/orders` as item ids and option choices (`{ itemId: "latte", options: { size: "large", milk: "oat" } }`), never prices. The server prices the order itself and replies with the receipt: the order number, a long unguessable `publicId`, the lines as saved, and the total. `expectedTotalCentavos` is the total the customer saw, so the server can say "that changed" instead of charging a different amount.
 
-With no endpoint set, nothing is sent and the confirmation tells the customer to show their screen at the counter.
+- **Retries are safe.** Each distinct order gets its own `Idempotency-Key`; sending the same order again (a double tap, or a reply lost on a slow connection) returns the first order instead of making another. Change the cart or the pickup time and the key changes too.
+- **When the server says no**, the customer keeps their cart and sees a plain message (`src/lib/orderErrors.ts`): prices changed (with the new total), an item is no longer available, the pickup time passed, online orders are paused, or too many orders from one place. The menu or pickup times are fetched again so the screen catches up.
+- **Tracking.** Each order is looked up by its `publicId` (`GET /api/v1/orders/:publicId`) every 15 seconds and whenever the tab comes back, until it is collected, cancelled, or two hours past its pickup time. News is saved into the order store, so every screen reads one copy. The orders pill in the corner shows orders on the way; tapping it opens each with its number, progress and receipt. The browser keeps up to five orders.
+- **Ready alert.** When an order turns `ready`, the pill turns dark and pulses, and the customer also gets a system notification (if they tapped "Let me know when it's ready" and allowed it), a vibration, a chime and a flag in the tab title. This happens once per order.
+- **Cancelling.** While an order is still `received`, its card offers "Cancel this order" (two taps). Once the bar starts on it, the server refuses and the customer is sent to the counter. A cancelled order, whether by the customer or the bar, shows its own message and stops being checked.
 
-## Telling customers their order is ready
-
-After an order is sent, the page asks the same endpoint for its status every 15 seconds, with a `GET` request: `VITE_ORDER_ENDPOINT?number=A5-K7P`. The endpoint should reply with JSON like:
-
-```json
-{ "status": "ready" }
-```
-
-`status` is one of `received`, `preparing`, `ready` or `collected`. Staff move the order along, for example by changing a Status column in the Google Sheet that the Apps Script `doGet` reads.
-
-While the customer keeps browsing, a small pill in the corner shows their orders on the way ("Order A5-K7P · We're making it now"); tapping it opens every order with its number, progress and receipt. The browser keeps up to five orders, each until two hours after its pickup time. When an order turns `ready`, the pill turns dark and pulses, and the customer also gets a system notification (if they tapped "Let me know when it's ready" and allowed it), a vibration, a chime and a flag in the tab title. This happens once per order. Checking stops once the order is `collected`, or two hours after the pickup time.
-
-If the endpoint does not reply with a status, the order screen does not show any tracking. The page has to stay open in the customer's browser for the alert to arrive: sending a push to a closed page would need a push server, which this project does not have. Some mobile browsers, Chrome on Android among them, only show system notifications from a service worker. On those browsers the customer still gets the chime, the vibration and the banner.
+The page has to stay open in the customer's browser for the alert to arrive: sending a push to a closed page would need a push server, which this project does not have. Some mobile browsers, Chrome on Android among them, only show system notifications from a service worker. On those browsers the customer still gets the chime, the vibration and the banner.
 
 ## Getting started
 
@@ -52,7 +44,8 @@ src/
   styles.css                All styles (plain CSS with custom properties)
 
   api/                      Talking to the backend
-    client.ts               apiGet: fetch, timeout, errors, zod parsing
+    client.ts               apiGet and apiPost: fetch, timeout, errors, zod parsing
+    orders.ts               postOrder, fetchOrder, cancelOrder
     queries.ts              The menu, shop and pickup-slot queries and how often they refresh
     queryClient.ts          Query client and the saved (24 h) menu and shop cache
     hooks.ts                useMenu, useShop, usePickupSlotsQuery
@@ -64,8 +57,8 @@ src/
     pricing.ts              Drink options, prices, cart line type
     time.ts                 Manila time and time formatting
     pickupSlots.ts          Labels the pickup times the server offers
-    orders.ts               Order numbers, the payload the bar receives, sending it
-    orderStatus.ts          Asking the bar whether an order is ready
+    orders.ts               Building the order request, phone numbers, whether an order is finished
+    orderErrors.ts          What to tell the customer when placing or cancelling fails
     readyAlert.ts           Notification, chime and vibration when it is
     shop.ts                 Open now or closed, hours text, map link, from the shop's hours
     flyToCart.ts            The "added to cart" animation
@@ -74,13 +67,13 @@ src/
     cartReducer.ts          Every change to the cart goes through here
     cartStore.ts            The cart (zustand, saved to localStorage)
     cartStorage.ts          Checks saved cart lines are well formed
-    orderStore.ts           Orders placed in this browser (zustand, saved)
+    orderStore.ts           Orders placed in this browser, as the API sent them (zustand, saved)
     orderHistory.ts         Each order is kept until two hours after pickup, at most five
     orderTypeStore.ts       Dine in or take out, for this browser session
     useCart.ts              Read and update the cart from any component
 
   hooks/useNow.ts           The current time, refreshed every 20 seconds
-  hooks/useOrderStatus.ts   Checks each order's status until it is picked up
+  hooks/useOrderTracking.ts Looks up each order on the way until it is finished, and sounds the ready alert
 
   components/
     stage/                  The main screen

@@ -24,11 +24,11 @@ npm run dev:backend         # http://localhost:3000
 npm run dev:frontend        # http://localhost:5173 (second terminal)
 ```
 
-The rebuild of the API is happening in slices (see [docs/api.md](docs/api.md)). Until the order endpoints land, the frontend still talks to the old order contract, which the backend no longer serves.
+The API is being built in slices (see [docs/api.md](docs/api.md)); customer ordering works end to end, staff tools come next.
 
 ## How they connect
 
-Today (until slice 3): the frontend POSTs each order to `VITE_ORDER_ENDPOINT` and polls `GET VITE_ORDER_ENDPOINT?number=A5-XXX`, but the backend no longer serves `/orders`, so orders are not received. After slice 3 the frontend uses `VITE_API_URL` and the `/api/v1` endpoints in [docs/api.md](docs/api.md).
+The frontend reads the menu, hours and pickup times from `VITE_API_URL`, places orders with `POST /api/v1/orders` and checks on each one by its `publicId` every 15 seconds. The endpoints are in [docs/api.md](docs/api.md) and [backend/README.md](backend/README.md). Nothing in the app moves an order past `received` yet (the staff side is slices 4 and 5), so until then change an order's status in the database to see the tracker move.
 
 ## Deploying on Render
 

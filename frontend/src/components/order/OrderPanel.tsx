@@ -1,9 +1,11 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence } from 'motion/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { postOrder } from '../../api/orders';
 import { useCart } from '../../cart/useCart';
 import { useCatalog } from '../../data/CatalogContext';
-import type { OrderStatuses } from '../../hooks/useOrderStatus';
-import { newOrderNumber, sendOrder, type OrderType, type PlacedOrder } from '../../lib/orders';
+import { buildOrderRequest, type OrderResponse, type OrderType } from '../../lib/orders';
+import { staleAfter } from '../../lib/orderErrors';
 import { formatPeso, type CartLine } from '../../lib/pricing';
 import { CartLineItem } from './CartLineItem';
 import { MyOrders } from './MyOrders';
@@ -16,15 +18,17 @@ type Removed = { line: CartLine; index: number };
 type OrderPanelProps = {
   orderType: OrderType;
   startOnOrders: boolean;
-  orders: PlacedOrder[];
-  statuses: OrderStatuses;
-  onPlaced: (order: PlacedOrder) => void;
+  orders: OrderResponse[];
+  onPlaced: (order: OrderResponse) => void;
   onClose: () => void;
   onEditLine: (line: CartLine) => void;
 };
 
-export function OrderPanel({ orderType, startOnOrders, orders, statuses, onPlaced, onClose, onEditLine }: OrderPanelProps) {
+export function OrderPanel({ orderType, startOnOrders, orders, onPlaced, onClose, onEditLine }: OrderPanelProps) {
   const catalog = useCatalog();
+  const queryClient = useQueryClient();
+  // One key per distinct order. Retrying the same order reuses it, so the server never makes a second one.
+  const attempt = useRef<{ body: string; key: string } | null>(null);
   const { lines, total, dispatch } = useCart();
   const [step, setStep] = useState<'review' | 'pickup'>('review');
   const [showingOrders, setShowingOrders] = useState(startOnOrders);
@@ -66,26 +70,26 @@ export function OrderPanel({ orderType, startOnOrders, orders, statuses, onPlace
   );
 
   const placeOrder = async ({ name, phone, slot }: PickupDetails) => {
-    const now = new Date();
-    const order: PlacedOrder = {
-      number: newOrderNumber(),
-      orderType,
-      name,
-      phone,
-      pickupAt: slot.pickupAt,
-      placedAt: now.getTime(),
-      lines,
-      total,
-      sent: false,
-    };
-    const result = await sendOrder(order, catalog);
-    onPlaced({ ...order, sent: result.sent, number: (result.sent && result.number) || order.number });
+    const request = buildOrderRequest(lines, catalog, { orderType, name, phone: phone || null, pickupAt: new Date(slot.pickupAt).toISOString() });
+    const body = JSON.stringify(request);
+    if (attempt.current?.body !== body) attempt.current = { body, key: crypto.randomUUID() };
+
+    let order: OrderResponse;
+    try {
+      order = await postOrder(request, attempt.current.key);
+    } catch (error) {
+      // The menu or the pickup times on screen are out of date: look again so the customer sees what changed.
+      for (const key of staleAfter(error)) void queryClient.invalidateQueries({ queryKey: [key] });
+      throw error;
+    }
+    attempt.current = null;
+    onPlaced(order);
     setShowingOrders(true);
     dispatch({ type: 'clear' });
   };
 
   if (showingOrders && orders.length > 0) {
-    return <MyOrders orders={orders} statuses={statuses} onClose={onClose} />;
+    return <MyOrders orders={orders} onClose={onClose} />;
   }
 
   if (lines.length === 0) {

@@ -1,29 +1,8 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createOrderRequestSchema } from '@kape/contract';
+import { describe, expect, it } from 'vitest';
 import { catalog } from '../test/menuFixture';
-import { newOrderNumber, normalizePhone, orderPayload, sendOrder, type PlacedOrder } from './orders';
-
-const order: PlacedOrder = {
-  number: 'A5-K7P',
-  orderType: 'dine-in',
-  name: 'Ana',
-  phone: '09171234567',
-  pickupAt: Date.parse('2026-11-18T23:15:00Z'),
-  placedAt: Date.parse('2026-11-18T23:00:00Z'),
-  lines: [{ id: 'l1', itemId: 'latte', options: { size: 'large', temperature: 'iced', milk: 'oat', extraShot: false }, note: 'less ice', quantity: 2 }],
-  total: 0,
-  sent: false,
-};
-
-describe('newOrderNumber', () => {
-  it('is A5- and three easy-to-say characters', () => {
-    for (let i = 0; i < 50; i++) expect(newOrderNumber()).toMatch(/^A5-[ACDEFGHJKMNPRTVWXY34679]{3}$/);
-  });
-
-  it('covers the whole alphabet', () => {
-    expect(newOrderNumber(() => 0)).toBe('A5-AAA');
-    expect(newOrderNumber(() => 0.9999)).toBe('A5-999');
-  });
-});
+import { buildOrderRequest, isFinished, normalizePhone } from './orders';
+import { defaultOptions, type CartLine } from './pricing';
 
 describe('normalizePhone', () => {
   it('accepts local and +63 mobile numbers', () => {
@@ -38,40 +17,49 @@ describe('normalizePhone', () => {
   });
 });
 
-describe('orderPayload', () => {
-  it('spells out each line for the bar', () => {
-    expect(orderPayload(order, catalog).items[0]).toMatchObject({ item: 'Latte', quantity: 2, note: 'less ice' });
-    expect(orderPayload(order, catalog).items[0]?.options).toContain('Large');
-    expect(orderPayload(order, catalog).pickupAt).toBe('2026-11-18T23:15:00.000Z');
-  });
-
-  it('tells the bar whether the order is for here or to go', () => {
-    expect(orderPayload(order, catalog).orderType).toBe('dine-in');
+describe('isFinished', () => {
+  it('is true once an order is collected or cancelled, because nothing more will change', () => {
+    expect(isFinished({ status: 'collected' })).toBe(true);
+    expect(isFinished({ status: 'cancelled' })).toBe(true);
+    expect(isFinished({ status: 'received' })).toBe(false);
+    expect(isFinished({ status: 'ready' })).toBe(false);
   });
 });
 
-describe('sendOrder', () => {
-  afterEach(() => vi.unstubAllGlobals());
-
-  it('does not send when no endpoint is set', async () => {
-    const fetchMock = vi.fn();
-    vi.stubGlobal('fetch', fetchMock);
-    await expect(sendOrder(order, catalog, '')).resolves.toEqual({ sent: false });
-    expect(fetchMock).not.toHaveBeenCalled();
+describe('buildOrderRequest', () => {
+  const latte = catalog.getItem('latte');
+  const details = { orderType: 'take-out', name: 'Maria', phone: null, pickupAt: '2026-11-28T01:15:00.000Z' } as const;
+  const line = (itemId: string, changes: Partial<CartLine> = {}): CartLine => ({
+    id: `${itemId}-1`,
+    itemId,
+    options: defaultOptions(catalog.getItem(itemId)),
+    note: '',
+    quantity: 1,
+    ...changes,
   });
 
-  it('uses the number the endpoint replies with', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ number: 'A5-001' }))));
-    await expect(sendOrder(order, catalog, 'https://example.test/orders')).resolves.toEqual({ sent: true, number: 'A5-001' });
+  it('sends choices as option group ids and value codes, never prices', () => {
+    const large = line('latte', { options: { size: 'large', temperature: 'iced', milk: 'oat', extraShot: true }, note: ' less ice ', quantity: 2 });
+    const request = buildOrderRequest([large], catalog, details);
+
+    expect(request.lines).toEqual([
+      { itemId: 'latte', options: { size: 'large', temperature: 'iced', milk: 'oat', extra_shot: 'extra' }, note: 'less ice', quantity: 2 },
+    ]);
+    expect(request.expectedTotalCentavos).toBe((170 + 30 + 40 + 50) * 2 * 100);
   });
 
-  it('accepts a reply that is not JSON', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('ok')));
-    await expect(sendOrder(order, catalog, 'https://example.test/orders')).resolves.toEqual({ sent: true, number: undefined });
+  it('only sends the choices an item offers', () => {
+    const request = buildOrderRequest([line('pandesal'), line('cold-brew'), line('alas-singko')], catalog, details);
+    expect(request.lines.map((l) => l.options)).toEqual([{}, { size: 'regular', milk: 'none' }, { extra_shot: 'none' }]);
   });
 
-  it('throws when the endpoint fails, so the cart is kept', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('', { status: 500 })));
-    await expect(sendOrder(order, catalog, 'https://example.test/orders')).rejects.toThrow('500');
+  it('sends an empty note as null', () => {
+    expect(buildOrderRequest([line('latte')], catalog, details).lines[0]?.note).toBeNull();
+  });
+
+  it('produces a request the API accepts', () => {
+    const request = buildOrderRequest([line('latte'), line('pandesal', { note: 'warmed up' })], catalog, { ...details, phone: '09171234567' });
+    expect(createOrderRequestSchema.safeParse(request).success).toBe(true);
+    expect(latte.price).toBe(170);
   });
 });

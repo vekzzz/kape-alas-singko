@@ -1,31 +1,29 @@
 import { motion } from 'motion/react';
-import type { OrderStatuses } from '../../hooks/useOrderStatus';
-import type { PlacedOrder } from '../../lib/orders';
-import type { OrderStatus } from '../../lib/orderStatus';
+import type { OrderResponse, OrderStatus } from '../../lib/orders';
 import { formatPickup } from '../../lib/time';
 
 type OrderPillProps = {
-  orders: PlacedOrder[];
-  statuses: OrderStatuses;
+  /** Orders still on the way: not collected, not cancelled. */
+  orders: OrderResponse[];
   onOpen: () => void;
 };
 
-const STATUS_LINES: Record<Exclude<OrderStatus, 'collected'>, string> = {
+const STATUS_LINES: Record<Exclude<OrderStatus, 'collected' | 'cancelled'>, string> = {
   received: "We've got it",
   preparing: "We're making it now",
   ready: "It's ready, come grab it!",
 };
 
-export function OrderPill({ orders, statuses, onOpen }: OrderPillProps) {
-  const readyCount = orders.filter((order) => statuses[order.number] === 'ready').length;
+export function OrderPill({ orders, onOpen }: OrderPillProps) {
+  const readyCount = orders.filter((order) => order.status === 'ready').length;
   const latest = orders[0]!;
-  const latestStatus = statuses[latest.number];
+  const latestStatus = latest.status;
 
   let title: string;
   let line: string;
   if (orders.length === 1) {
     title = `Order ${latest.number}`;
-    line = latestStatus && latestStatus !== 'collected' ? STATUS_LINES[latestStatus] : `Ready ${formatPickup(latest.pickupAt, Date.now())}`;
+    line = latestStatus !== 'collected' && latestStatus !== 'cancelled' ? STATUS_LINES[latestStatus] : `Ready ${formatPickup(Date.parse(latest.pickupAt), Date.now())}`;
   } else {
     title = `${orders.length} orders`;
     line = readyCount > 0 ? `${readyCount} ready, come grab ${readyCount === 1 ? 'it' : 'them'}!` : "We're on them";

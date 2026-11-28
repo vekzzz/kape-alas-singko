@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState, type FormEvent } from 'react';
 import { usePickupSlotsQuery, useShop } from '../../api/hooks';
 import { useNow } from '../../hooks/useNow';
+import { placeOrderMessage } from '../../lib/orderErrors';
 import { normalizePhone, type OrderType } from '../../lib/orders';
 import { toPickupSlots, type PickupSlot } from '../../lib/pickupSlots';
 import { formatPeso } from '../../lib/pricing';
@@ -32,7 +33,8 @@ export function PickupForm({ orderType, total, onBack, onPlace }: PickupFormProp
   const [phoneError, setPhoneError] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
-  const [sendError, setSendError] = useState(false);
+  // What went wrong the last time we tried to send the order, in words for the customer.
+  const [sendError, setSendError] = useState<string | null>(null);
   const chosenSlot = slots.find((slot) => slot.value === slotValue) ?? slots[0];
   const quickSlots = slots.slice(0, QUICK_SLOTS);
   const laterSlots = slots.slice(QUICK_SLOTS);
@@ -56,11 +58,11 @@ export function PickupForm({ orderType, total, onBack, onPlace }: PickupFormProp
     }
 
     setSending(true);
-    setSendError(false);
+    setSendError(null);
     try {
       await onPlace({ name: name.trim(), phone: normalizedPhone, slot: chosenSlot });
-    } catch {
-      setSendError(true);
+    } catch (error) {
+      setSendError(placeOrderMessage(error));
       setSending(false);
     }
   };
@@ -190,7 +192,7 @@ export function PickupForm({ orderType, total, onBack, onPlace }: PickupFormProp
 
       {sendError && (
         <p className="form-error" role="alert">
-          Hmm, we couldn't reach the bar. Check your connection and try again. Don't worry, your order is still here.
+          {sendError}
         </p>
       )}
 

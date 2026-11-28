@@ -1,23 +1,27 @@
 import { useId, useState } from 'react';
-import { ORDER_STATUSES, type OrderStatus } from '../../lib/orderStatus';
+import type { OrderStatus } from '../../lib/orders';
 import { notificationsSupported } from '../../lib/readyAlert';
 
-const STEP_LABELS: Record<OrderStatus, string> = {
+/** The steps an order moves through. A cancelled order leaves them, so it has its own screen. */
+type Step = Exclude<OrderStatus, 'cancelled'>;
+const STEPS: Step[] = ['received', 'preparing', 'ready', 'collected'];
+
+const STEP_LABELS: Record<Step, string> = {
   received: 'Order received',
   preparing: 'Being made',
   ready: 'Ready for you',
   collected: 'Picked up',
 };
 
-const MESSAGES: Record<OrderStatus, string> = {
+const MESSAGES: Record<Step, string> = {
   received: "We've got your order!",
   preparing: 'Our barista is making it now.',
   ready: "It's ready! Come grab it at the counter.",
   collected: 'Picked up. Enjoy!',
 };
 
-export function OrderTracker({ status }: { status: OrderStatus }) {
-  const current = ORDER_STATUSES.indexOf(status);
+export function OrderTracker({ status }: { status: Step }) {
+  const current = STEPS.indexOf(status);
   const headingId = useId();
 
   return (
@@ -29,7 +33,7 @@ export function OrderTracker({ status }: { status: OrderStatus }) {
         {MESSAGES[status]}
       </p>
       <ol className="tracker-steps">
-        {ORDER_STATUSES.map((step, index) => (
+        {STEPS.map((step, index) => (
           <li key={step} className={index < current ? 'past' : index === current ? 'on' : undefined} aria-current={index === current ? 'step' : undefined}>
             <span className="tracker-dot" />
             <span>{STEP_LABELS[step]}</span>

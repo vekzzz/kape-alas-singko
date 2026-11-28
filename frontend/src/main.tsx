@@ -9,7 +9,7 @@ import './styles.css';
 initLiteMode();
 
 // Storage keys from before the move to zustand. Nothing reads them any more, so clear them out.
-for (const key of ['alas-singko-cart-v2', 'alas-singko-orders-v2', 'alas-singko-last-order-v1']) {
+for (const key of ['alas-singko-cart-v2', 'alas-singko-orders-v2', 'alas-singko-orders-v3', 'alas-singko-last-order-v1']) {
   try {
     localStorage.removeItem(key);
   } catch {}

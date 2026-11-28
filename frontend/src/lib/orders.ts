@@ -1,31 +1,12 @@
+import type { CreateOrderRequest, OrderResponse, OrderStatus, OrderType } from '@kape/contract';
 import type { Catalog } from '../data/menu';
-import { describeOptions, lineTotal, type CartLine } from './pricing';
+import { cartTotal, type CartLine } from './pricing';
 
-export type OrderType = 'dine-in' | 'take-out';
+export type { OrderResponse, OrderStatus, OrderType };
 
 export const ORDER_TYPE_LABELS: Record<OrderType, string> = { 'dine-in': 'Dine in', 'take-out': 'Take out' };
 
-export type PlacedOrder = {
-  number: string;
-  orderType: OrderType;
-  name: string;
-  phone: string;
-  pickupAt: number;
-  placedAt: number;
-  lines: CartLine[];
-  total: number;
-  sent: boolean;
-};
-
-const ORDER_ALPHABET = 'ACDEFGHJKMNPRTVWXY34679';
-const SEND_TIMEOUT_MS = 10_000;
-
-export function newOrderNumber(random: () => number = Math.random): string {
-  let code = '';
-  for (let i = 0; i < 3; i++) code += ORDER_ALPHABET[Math.floor(random() * ORDER_ALPHABET.length)];
-  return `A5-${code}`;
-}
-
+/** Accepts 09XX or +639XX, with spaces or dashes, and returns the 09XXXXXXXXX form, or null if it is not a mobile number. */
 export function normalizePhone(input: string): string | null {
   const digits = input.replace(/[\s-]/g, '');
   if (/^09\d{9}$/.test(digits)) return digits;
@@ -33,42 +14,32 @@ export function normalizePhone(input: string): string | null {
   return null;
 }
 
-export function orderPayload(order: PlacedOrder, catalog: Catalog) {
-  return {
-    number: order.number,
-    orderType: order.orderType,
-    name: order.name,
-    phone: order.phone,
-    pickupAt: new Date(order.pickupAt).toISOString(),
-    placedAt: new Date(order.placedAt).toISOString(),
-    total: order.total,
-    items: order.lines.map((line) => {
-      const item = catalog.getItem(line.itemId);
-      return {
-        item: item.name,
-        options: describeOptions(item, line.options),
-        note: line.note,
-        quantity: line.quantity,
-        lineTotal: lineTotal(item, line),
-      };
-    }),
-  };
+/** An order the bar has finished with: nothing more will change, so there is nothing left to check. */
+export function isFinished(order: Pick<OrderResponse, 'status'>): boolean {
+  return order.status === 'collected' || order.status === 'cancelled';
 }
 
-export type SendResult = { sent: true; number?: string } | { sent: false };
+type CheckoutDetails = { orderType: OrderType; name: string; phone: string | null; pickupAt: string };
 
-export async function sendOrder(order: PlacedOrder, catalog: Catalog, endpoint: string | undefined = import.meta.env.VITE_ORDER_ENDPOINT): Promise<SendResult> {
-  if (!endpoint) return { sent: false };
-
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(orderPayload(order, catalog)),
-    signal: AbortSignal.timeout(SEND_TIMEOUT_MS),
-  });
-  if (!response.ok) throw new Error(`Order endpoint answered ${response.status}`);
-
-  const reply: unknown = await response.json().catch(() => null);
-  const number = reply && typeof reply === 'object' && 'number' in reply && typeof reply.number === 'string' ? reply.number : undefined;
-  return { sent: true, number };
+/**
+ * What the customer picked, in the words the API uses: item ids and option choices, not prices.
+ * The server prices the order itself; `expectedTotalCentavos` only lets it say "that changed" if the two differ.
+ */
+export function buildOrderRequest(lines: CartLine[], catalog: Catalog, details: CheckoutDetails): CreateOrderRequest {
+  return {
+    orderType: details.orderType,
+    name: details.name,
+    phone: details.phone,
+    pickupAt: details.pickupAt,
+    lines: lines.map((line) => {
+      const item = catalog.getItem(line.itemId);
+      const options: Record<string, string> = {};
+      if (item.hasSizes) options.size = line.options.size;
+      if (item.hasTemperatures) options.temperature = line.options.temperature;
+      if (item.hasMilk) options.milk = line.options.milk;
+      if (item.hasExtraShot) options.extra_shot = line.options.extraShot ? 'extra' : 'none';
+      return { itemId: line.itemId, options, note: line.note.trim() || null, quantity: line.quantity };
+    }),
+    expectedTotalCentavos: Math.round(cartTotal(lines, catalog) * 100),
+  };
 }

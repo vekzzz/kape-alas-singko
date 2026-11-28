@@ -14,7 +14,8 @@ import { WelcomeScreen } from './components/welcome/WelcomeScreen';
 import { CatalogContext } from './data/CatalogContext';
 import type { MenuItem } from './data/menu';
 import { useNow } from './hooks/useNow';
-import { useOrderStatuses } from './hooks/useOrderStatus';
+import { useOrderTracking } from './hooks/useOrderTracking';
+import { isFinished } from './lib/orders';
 import type { CartLine } from './lib/pricing';
 import { alertOrderReady } from './lib/readyAlert';
 
@@ -32,8 +33,8 @@ export default function App() {
   const [customizing, setCustomizing] = useState<Customizing | null>(null);
   const [cartView, setCartView] = useState<CartView | null>(null);
 
-  const statuses = useOrderStatuses(orders, (order) => alertOrderReady(order.number));
-  const ordersOnTheWay = orders.filter((order) => statuses[order.number] !== 'collected');
+  useOrderTracking((order) => alertOrderReady(order.number));
+  const ordersOnTheWay = orders.filter((order) => !isFinished(order));
 
   // A saved cart can hold something that has since been taken off the menu or sold out.
   useEffect(() => {
@@ -85,7 +86,7 @@ export default function App() {
 
         <AnimatePresence>
           {ordersOnTheWay.length > 0 && cartView === null && customizing === null && (
-            <OrderPill orders={ordersOnTheWay} statuses={statuses} onOpen={() => setCartView('orders')} />
+            <OrderPill orders={ordersOnTheWay} onOpen={() => setCartView('orders')} />
           )}
         </AnimatePresence>
 
@@ -108,7 +109,6 @@ export default function App() {
               orderType={orderType ?? 'take-out'}
               startOnOrders={cartView === 'orders'}
               orders={orders}
-              statuses={statuses}
               onPlaced={addOrder}
               onClose={closeCart}
               onEditLine={editCartLine}
