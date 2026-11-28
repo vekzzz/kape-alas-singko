@@ -4,7 +4,9 @@ dist
 .vitest
 
 # AI prompt docs
-docs/
+docs/*
+!docs/erd.md
+!docs/api.md
 *prompt*.md
 
 .env
